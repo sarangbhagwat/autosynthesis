@@ -18,9 +18,12 @@ import numpy as np
 from math import log as ln
 from matplotlib import pyplot as plt
 from apd.graph_utils import Graph
+from apd.units import APDBatchCrystallizer
 from thermosteam import Chemical, Stream
 from copy import deepcopy 
 from warnings import filterwarnings
+from networkx.classes.function import path_weight
+
 # from apd.apd_utils_c import mock_pressure_swing_distillation, distill_to_azeotropic_composition
 filterwarnings("ignore")
 
@@ -31,6 +34,8 @@ np_multiply_elementwise = np.multiply
 R = 8.31446261815324 #kJ/kmol/K or J/mol/K
 DAC = tmo.equilibrium.activity_coefficients.DortmundActivityCoefficients
 # FC = tmo.equilibrium.fugacity_coefficients.FugacityCoefficients
+
+SolidsCentrifuge = bst.SolidsCentrifuge
 
 #%%
 def distill_to_azeotropic_composition(stream, LHK, 
@@ -107,7 +112,7 @@ def mock_pressure_swing_distillation(stream, LHK,
                                       composition_steps=100,
                                       min_y_top=1e-3,
                                       max_y_top=0.999,
-                                      column_IDs=('temp_column_1', 'temp_column_2'),
+                                      # column_IDs=('temp_column_1', 'temp_column_2'),
                                       azeotrope_error_identifier_substring='cannot meet',
                                       target_column2_LK_recovery = 0.999,
                                       target_column2_ytop = 0.995,
@@ -117,7 +122,8 @@ def mock_pressure_swing_distillation(stream, LHK,
     stream_LK_only = tmo.Stream()
     stream_LK_only.imol[LHK[0]]
     stream_HK_only = tmo.Stream()
-    
+    stream_ID = stream.ID
+    column_IDs = (f'{stream_ID}_psd_column_1', f'{stream_ID}_psd_column_2')
     # stream_LHK_only.P = Ps[0]
     for i in chems:
         if not i.ID in LHK:
@@ -128,7 +134,7 @@ def mock_pressure_swing_distillation(stream, LHK,
         raise RuntimeError(f'{LHK} forms a maximum-boiling azeotrope; {T_bubble} > {chems[LHK[0]].Tb} and {T_bubble} > {chems[LHK[1]].Tb}.)')
     
     
-    temp_pump_1 = bst.Pump('temp_pump_1', ins=stream, P=Ps[0])
+    temp_pump_1 = bst.Pump(f'{stream_ID}_psd_pump_1', ins=stream, P=Ps[0])
     temp_pump_1.simulate()
     
     temp_column_1 = distill_to_azeotropic_composition(stream=temp_pump_1-0, LHK=LHK,
@@ -142,7 +148,7 @@ def mock_pressure_swing_distillation(stream, LHK,
                                                       column_ID=column_IDs[0],
                                                       azeotrope_error_identifier_substring=azeotrope_error_identifier_substring,)
     
-    temp_pump_2 = bst.Pump('temp_pump_2', ins=temp_column_1-0, P=Ps[1])
+    temp_pump_2 = bst.Pump(f'{stream_ID}_psd_pump_2', ins=temp_column_1-0, P=Ps[1])
     
     
     temp_pump_2.simulate()
@@ -254,10 +260,10 @@ def mock_pressure_swing_distillation(stream, LHK,
                                                     )
                 temp_column_2.simulate()
     
-    temp_LK_mixer = bst.Mixer('temp_LK_mixer', ins=(temp_column_2-0))
+    temp_LK_mixer = bst.Mixer(f'{stream_ID}_LK_mixer', ins=(temp_column_2-0))
     temp_LK_mixer.simulate()
     
-    temp_HK_mixer = bst.Mixer('temp_HK_mixer', ins=(temp_column_1-1, temp_column_2-1))
+    temp_HK_mixer = bst.Mixer(f'{stream_ID}_HK_mixer', ins=(temp_column_1-1, temp_column_2-1))
     temp_HK_mixer.simulate()
     
     return (temp_pump_1, temp_column_1, temp_pump_2, temp_column_2, temp_LK_mixer, temp_HK_mixer)
@@ -486,7 +492,7 @@ def add_flash_vessel(in_stream,
                     thermo=None
                     ):
     if not thermo:
-        thermo=stream.thermo
+        thermo=in_stream.thermo
     if not ID:
         ID=f'{in_stream.ID}_Flash'
     return Flash(ID, ins=in_stream, outs=(f'{ID}_0', f'{ID}_1'), 
@@ -672,6 +678,30 @@ def add_distillation_column(in_stream,
                                             )
     return new_column
 
+def add_crystallizer_and_filter(in_stream, solute, target_recovery=0.99, tau=6, N=4, 
+                        IDs=[None, None], get_solubility_vs_T=None):
+    if not IDs[0]:
+        IDs[0]=f'{in_stream.ID}_crystallizer'
+    
+    new_crystallizer = APDBatchCrystallizer(IDs[0], ins=in_stream, outs=f'{IDs[0]}_0', 
+                                            tau=tau, 
+                                            target_recovery=target_recovery, 
+                                            solute=solute, 
+                                            N=N)
+    new_crystallizer.simulate()
+    
+    if not IDs[1]:
+        IDs[1]=f'{in_stream.ID}_filter'
+        
+    new_filter = SolidsCentrifuge(IDs[1], ins=new_crystallizer.outs[0], 
+                            outs=(f'{IDs[1]}_{solute}_solid', f'{IDs[1]}_filtrate'),
+                            solids=['Yeast', solute], split={'Yeast':1-1e-4, solute:1-1e-4})
+    new_filter.simulate()
+    
+    # new_crystallizer.show()
+    # new_filter.show()
+    return [new_crystallizer, new_filter]
+
 def get_sinkless_streams(units, p_chem_IDs):
     ss = []
     for u in units:
@@ -782,12 +812,15 @@ def run_sequential_distillation(stream, products, impurities,
 class DAGNode():
     def __init__(self, split_performed, 
                  input_streams,
-                 output_streams):
+                 output_streams,
+                 # products,
+                 ):
         self.split_performed = split_performed
         self.input_streams = set(input_streams)
         self.output_streams = set(output_streams)
         self.ID = split_performed + "//" + str(input_streams) + "-->" + str(output_streams)  
         self.LHK_pointers = None
+        # self.products = products
         if self.split_performed:
             split_index = split_performed.index("|")
             self.LHK_pointers = split_performed[split_index-1:split_index], split_performed[split_index+1:split_index+2]
@@ -969,7 +1002,7 @@ def get_cost_sharp_split(edge, map_dict, feed_stream, column_type='ShortcutColum
                 for u in psd_units:
                     u.simulate()
                     util_cost_tot += u.utility_cost
-                print(f'\nPSD used: {LHK}; cost={util_cost_tot}')
+                # print(f'\nPSD used: {LHK}; cost={util_cost_tot}')
                 return util_cost_tot, psd_units
             except(RuntimeError or ValueError or FloatingPointError) as e:
                 # print((nki, nkj), str(e))
@@ -1013,7 +1046,7 @@ def get_cost_sharp_split(edge, map_dict, feed_stream, column_type='ShortcutColum
 
 
 
-def generate_DAG_vle_sharp(in_stream, chem_IDs=None, include_infeasible_edges=False, column_type='ShortcutColumn'):
+def generate_DAG_vle_sharp(in_stream, chem_IDs=None, include_infeasible_edges=False, column_type='ShortcutColumn', products=None):
     # chem_IDs = in_stream.products + in_stream.impurities
     
     tmo.settings.set_thermo(in_stream.chemicals)
@@ -1022,6 +1055,7 @@ def generate_DAG_vle_sharp(in_stream, chem_IDs=None, include_infeasible_edges=Fa
     
     map_keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
     map_dict = {map_keys[i]:chem_IDs[i] for i in range(len(chem_IDs))}
+    map_dict_rev = {chem_IDs[i]:map_keys[i] for i in range(len(chem_IDs))}
     # print(map_dict)
     start_node = DAGNode(split_performed = "",
                          input_streams = ["".join([i for i in list(map_dict.keys())])],
@@ -1079,24 +1113,30 @@ def generate_DAG_vle_sharp(in_stream, chem_IDs=None, include_infeasible_edges=Fa
     edge_dict_keys = list(edges_dict.keys())
     # for i in nodes_list:
     #     print(i.ID)
-    terminal_node_ins = nodes_list[-1].output_streams
-    terminal_node = DAGNode(split_performed = "",
-                         input_streams = terminal_node_ins,
-                         output_streams = terminal_node_ins)
+    absolute_terminal_node_ins = nodes_list[-1].output_streams
+    absolute_terminal_node = DAGNode(split_performed = "",
+                         input_streams = absolute_terminal_node_ins,
+                         output_streams = absolute_terminal_node_ins)
     for k,l in edge_dict_keys:
         for n in nodes_list:
             if l==n.ID:
-                if n.output_streams == terminal_node_ins:
-                    edges_dict[(n.ID, terminal_node.ID)] = 0
+                if n.output_streams == absolute_terminal_node_ins:
+                    edges_dict[(n.ID, absolute_terminal_node.ID)] = 0
                 
         # if len(k[1])==3:
             # edges_dict[(k[1], "A,B,C,D")] = 0
     
     nodes_dict = {}
     
+    terminal_nodes = []
+    
     for nnn in nodes_list:
         nodes_dict[nnn.ID] = nnn
-    return edges_dict, map_dict, nodes_dict, edges_units_dict
+        # print(nnn.output_streams, [map_dict_rev[p] for p in products])
+        if np.array([map_dict_rev[p] in nnn.output_streams for p in products]).all():
+            terminal_nodes.append(nnn.ID)
+    
+    return edges_dict, map_dict, nodes_dict, edges_units_dict, terminal_nodes
 # #%% DAG - topological sort distillation-only example
 
 
@@ -1181,15 +1221,18 @@ def perform_solvent_extraction(stream, solvent_ID):
     # except:
     #     return None, None, None
     
-def identical_streams(stream1, stream2, mol_compo_sig_figs=2, F_mol_sig_figs=2):
+def identical_streams(stream1, stream2, mol_compo_sig_figs=2, F_mol_sig_figs=0):
     for i in stream1.chemicals:
         if round(stream1.imol[i.ID]/stream1.F_mol, mol_compo_sig_figs)==\
             round(stream2.imol[i.ID]/stream2.F_mol, mol_compo_sig_figs)\
-            and round(stream1.F_mol, F_mol_sig_figs)==\
-                round(stream2.F_mol, F_mol_sig_figs):
+            and round(stream1.F_mol/100, F_mol_sig_figs)==\
+                round(stream2.F_mol/100, F_mol_sig_figs):
                     
-                    return True
-    return False
+                    # return True
+                    pass
+        else:
+            return False
+    return True
 
 def connect_units(units, stream):
     
@@ -1204,128 +1247,191 @@ def connect_units(units, stream):
         for s2 in sourceless_streams:
             if identical_streams(s1, s2):
                 s2.sink.ins[s2.sink.ins.index(s2)] = s1
+                # print(s1, s2, s1.sink, s2.sink, s1.source, s2.source)
 #%% Run
-def get_separation_units(stream, plot_graph=False, print_progress=False, 
-                         connect_path_units=True, simulate_again_after_connecting=True):
-    if print_progress:
-        print('Running solvents barrage ...')
-    # candidate_solvents, results_df = get_candidate_solvents_ranked_for_primary_extraction(stream=stream, 
-    #                               solute_ID='AdipicAcid', 
-    #                               impurity_IDs=['AceticAcid', 'AdipicAcid'],
-    #                               T=30.+273.15)
-    
+def get_separation_units(stream, products=[], plot_graph=False, print_progress=False, 
+                         connect_path_units=True, simulate_again_after_connecting=True,
+                         include_infeasible_edges=True, save_DAG=False):
+ 
     
     extract, stream_for_DAG, msms = None, stream, None
     
-    # if candidate_solvents:
-    #     print(f'Performing primary extraction using solvent: {candidate_solvents[0]} ...')
-        # stream_for_DAG, new_stream, msms = perform_solvent_extraction(stream, candidate_solvents[0])
-    
-    # %%
-    
     if print_progress:
-        stream.show('cwt100')
-        stream_for_DAG.show('cwt100')
+        print('Attempting crystallization ...')
     
+    stream_copy = Stream('stream_copy')
+    stream_copy.copy_like(stream)
+    pre_DAG_path_units = add_crystallizer_and_filter(in_stream=stream_copy, solute=products[0],
+                                                     IDs=[f'{stream.ID}_crystallizer', f'{stream.ID}_filter'])
     
-    # remove_trace_chemicals = True
+    add_pre_DAG_path_units = False
     
-    # if remove_trace_chemicals:
-    #     for i in stream_for_DAG.chemicals:
-    #         i_ID = i.ID
-            # stream_for_DAG.imol['Water'] = 0.
-            # if stream_for_DAG.imass[i_ID]/stream_for_DAG.F_mass < 0.005:
-            #     stream_for_DAG.imass[i_ID] = 0.
+    if pre_DAG_path_units[0].effective_recovery>=0.2:
+        add_pre_DAG_path_units = True
+        pre_DAG_path_units[0].ins[0] = stream
+        pre_DAG_path_units[0].simulate()
+        stream_for_DAG = pre_DAG_path_units[1].outs[1]
+    
+    has_products = False
+    for p in products:
+        if stream_for_DAG.imol[p]/stream_for_DAG.F_mol >= 0.01:
+            has_products = True
+    
+    if has_products:
+        if print_progress:
+            print('Running solvents barrage ...')
+        # candidate_solvents, results_df = get_candidate_solvents_ranked_for_primary_extraction(stream=stream, 
+        #                               solute_ID='AdipicAcid', 
+        #                               impurity_IDs=['AceticAcid', 'AdipicAcid'],
+        #                               T=30.+273.15)
+        
+        
+        # extract, stream_for_DAG, msms = None, stream, None
+        
+        # if candidate_solvents:
+        #     print(f'Performing primary extraction using solvent: {candidate_solvents[0]} ...')
+            # stream_for_DAG, new_stream, msms = perform_solvent_extraction(stream, candidate_solvents[0])
+        
+        # %%
+        
+        if print_progress:
+            stream.show('cwt100')
+            stream_for_DAG.show('cwt100')
+        
+        
+        # remove_trace_chemicals = True
+        
+        # if remove_trace_chemicals:
+        #     for i in stream_for_DAG.chemicals:
+        #         i_ID = i.ID
+                # stream_for_DAG.imol['Water'] = 0.
+                # if stream_for_DAG.imass[i_ID]/stream_for_DAG.F_mass < 0.005:
+                #     stream_for_DAG.imass[i_ID] = 0.
+                
+        if print_progress:
+            print('Generating graph ...')
+        edges_dict, map_dict, nodes_dict, edges_units_dict, terminal_nodes = generate_DAG_vle_sharp(stream_for_DAG,
+                                                                  column_type='BinaryDistillation',
+                                                                  include_infeasible_edges=include_infeasible_edges,
+                                                                  products=products)
+        
+        # if save_DAG:
+        with open('DAG.txt', 'w') as f:
+            for k, v in edges_dict.items():
+                # try:
+                f.write(str(k[0]) + "    " + str(k[1]) + "    " + str(v) + "\n")
+                # except:
+                #     import pdb
+                #     pdb.set_trace()
+    
+        import networkx as nx
+        import matplotlib.pyplot as plt
+        from itertools import combinations
+        
+        G=nx.read_weighted_edgelist("./DAG.txt", delimiter="    ")
+        
+        # for (i,j,d) in G.edges(data=True):
+        #     print(i,j,d['weight'])
             
-    if print_progress:
-        print('Generating graph ...')
-    edges_dict, map_dict, nodes_dict, edges_units_dict = generate_DAG_vle_sharp(stream_for_DAG,
-                                                              column_type='BinaryDistillation',
-                                                              include_infeasible_edges=True)
-    
-    with open('DAG.txt', 'w') as f:
-        for k, v in edges_dict.items():
-            # try:
-            f.write(str(k[0]) + "    " + str(k[1]) + "    " + str(v) + "\n")
-            # except:
-            #     import pdb
-            #     pdb.set_trace()
-    
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    from itertools import combinations
-    
-    G=nx.read_weighted_edgelist("./DAG.txt", delimiter="    ")
-    
-    # for (i,j,d) in G.edges(data=True):
-    #     print(i,j,d['weight'])
+        edges_dict_keys = list(edges_dict.keys())
         
-    edges_dict_keys = list(edges_dict.keys())
-    
-    path = nx.shortest_path(G, edges_dict_keys[0][0], edges_dict_keys[-1][-1], weight='weight')
-    
-    path_edges = list(zip(path,path[1:]))
-    
-    if print_progress:
-        print(path_edges)
-        print()
-    
-    
-    #%% Plot
-    if plot_graph:
-        import copy
-        print("Plotting graph ...")
-        edges_dict_copy = copy.deepcopy(edges_dict)
-        for k in edges_dict_copy.keys():
-            if edges_dict_copy[k]==1e10:
-                edges_dict_copy[k]='inf'
-            else: edges_dict_copy[k] = np.round(edges_dict_copy[k], 2)
+        # print(terminal_nodes)
+        # print('nodes:')
+        # print(G.nodes)
+        # print('\n')
+        # print(edges_dict_keys[0][0], edges_dict_keys[-1][-1])
+        paths = [nx.shortest_path(G, edges_dict_keys[0][0], tn, weight='weight') for tn in terminal_nodes if tn in G.nodes]
+        
+        # path_lengths = [path_weight(G, path, weight='weight') for path in paths]
+        
+        def get_path_length(path):
+            return path_weight(G, path, weight='weight')
+        
+        # for p in range(len(paths)):
+        #     print(paths[p], path_lengths[p])
+        
+        paths.sort(key=lambda i: get_path_length(i))
+        path = paths[0]
+        
+        path_edges = list(zip(path,path[1:]))
+        
+        if print_progress:
+            print(path_edges)
+            print()
+        
+        
+        #%% Plot
+        if plot_graph:
+            import copy
+            print("Plotting graph ...")
+            edges_dict_copy = copy.deepcopy(edges_dict)
+            for k in edges_dict_copy.keys():
+                if edges_dict_copy[k]==1e10:
+                    edges_dict_copy[k]='inf'
+                else: edges_dict_copy[k] = np.round(edges_dict_copy[k], 2)
+                
             
-        
-        plt.figure(figsize=(40,40))
-        
-        pos = nx.circular_layout(G, scale=20,)
-        # pos = nx.multipartite_layout(G)
-        
-        # Draw the entire graph
-        nx.draw(G,pos,with_labels = True)
-        
-        # Draw all edge labels
-        nx.draw_networkx_edge_labels(
-            G, pos,
-            edge_labels=edges_dict_copy,
-            font_color='red'
-        )
-        
-        # Highlight shortest path
-        nx.draw_networkx_nodes(G,pos,nodelist=path,node_color='r')
-        nx.draw_networkx_edges(G,pos,edgelist=path_edges,edge_color='r',width=10)
-        
-        
-        plt.axis('equal')
-        plt.show()
+            plt.figure(figsize=(40,40))
+            
+            pos = nx.circular_layout(G, scale=20,)
+            # pos = nx.multipartite_layout(G)
+            
+            # Draw the entire graph
+            nx.draw(G,pos,with_labels = True)
+            
+            # Draw all edge labels
+            nx.draw_networkx_edge_labels(
+                G, pos,
+                edge_labels=edges_dict_copy,
+                font_color='red'
+            )
+            
+            # Highlight shortest path
+            nx.draw_networkx_nodes(G,pos,nodelist=path,node_color='r')
+            nx.draw_networkx_edges(G,pos,edgelist=path_edges,edge_color='r',width=10)
+            
+            
+            plt.axis('equal')
+            plt.show()
     
     
-    #%% Create system
-    path_units = []
-    
-    for edge in path_edges:
-        try:
-            edge_units = edges_units_dict[edge]
-            if type(edge_units)==list or type(edge_units)==tuple:
-                # print(edge_units)
-                for eu in edge_units:
-                    path_units.append(eu)
-            else:
-                path_units.append(edge_units)
-        except:
-            pass
-    
-    if connect_path_units:
-        connect_units(path_units, stream)
-    
-    if simulate_again_after_connecting:
-        for u in path_units:
-            u.simulate()
-                                
-    return path_units
+        #%% Create system
+        path_units = []
+        
+        for edge in path_edges:
+            try:
+                edge_units = edges_units_dict[edge]
+                if type(edge_units)==list or type(edge_units)==tuple:
+                    # print(edge_units)
+                    for eu in edge_units:
+                        path_units.append(eu)
+                else:
+                    path_units.append(edge_units)
+            except:
+                pass
+        
+        # if connect_path_units:
+        #     connect_units(path_units, stream)
+        
+        
+        if add_pre_DAG_path_units:
+            if connect_path_units:
+                connect_units(pre_DAG_path_units + path_units, stream)
+                
+                if simulate_again_after_connecting:
+                    for u in path_units:
+                        u.simulate()
+            return pre_DAG_path_units + path_units
+        
+        else:
+            if connect_path_units:
+                connect_units(path_units, stream)
+                
+                if simulate_again_after_connecting:
+                    for u in path_units:
+                        u.simulate()
+        # else:
+            return path_units
+        
+    else:
+        return pre_DAG_path_units    
