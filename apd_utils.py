@@ -678,8 +678,9 @@ def add_distillation_column(in_stream,
                                             )
     return new_column
 
-def add_crystallizer_and_filter(in_stream, solute, target_recovery=0.99, tau=6, N=4, 
-                        IDs=[None, None], get_solubility_vs_T=None):
+def add_crystallizer_filter_dryer(in_stream, solute, target_recovery=0.99, tau=6, N=4, 
+                        IDs=[None, None, None], get_solubility_vs_T=None,
+                        natural_gas_price=0.218):
     if not IDs[0]:
         IDs[0]=f'{in_stream.ID}_crystallizer'
     
@@ -692,15 +693,48 @@ def add_crystallizer_and_filter(in_stream, solute, target_recovery=0.99, tau=6, 
     
     if not IDs[1]:
         IDs[1]=f'{in_stream.ID}_filter'
-        
+    
+    new_filter_recovery = 0.95
+    
     new_filter = SolidsCentrifuge(IDs[1], ins=new_crystallizer.outs[0], 
                             outs=(f'{IDs[1]}_{solute}_solid', f'{IDs[1]}_filtrate'),
                             solids=['Yeast', solute], split={'Yeast':1-1e-4, solute:1-1e-4})
+    
+    @new_filter.add_specification(run=False)
+    def new_filter_spec():
+        new_filter_solids = new_filter.outs[0]
+        new_filter.isplit[solute] = new_filter_recovery*new_filter.ins[0].imol['s', solute]/new_filter.ins[0].imol[solute]
+        new_filter._run()
+        new_filter_solids.phases = ('s', 'l')
+        for c in new_filter_solids.chemicals:
+            c_ID = c.ID
+            if not (c_ID=='Water' or c_ID =='H2O'):
+                new_filter_solids.imol['s',c_ID] = new_filter_solids.imol[c_ID]
+                new_filter_solids.imol['l',c_ID] = 0
+        new_filter.outs[1].phases = ('l')
+        
     new_filter.simulate()
     
+    if not IDs[2]:
+        IDs[2]=f'{in_stream.ID}_dryer'
+    
+    natural_gas_drying = Stream(f'natural_gas_drying_{IDs[2]}', units = 'kg/hr', price=0.218)
+    
+    new_dryer = bst.DrumDryer(IDs[2], ins=(new_filter-0, 'dryer_air_in', natural_gas_drying,),
+                         outs=('dry_solids', 'hot_air', 'emissions'),
+                         split={solute: 1e-4,
+                                    'Yeast': 0.}
+                         )
+    try:
+        new_dryer.simulate()
+    except:
+        breakpoint()
+    new_dryer.show()
     # new_crystallizer.show()
     # new_filter.show()
-    return [new_crystallizer, new_filter]
+    # new_dryer.show()
+    
+    return [new_crystallizer, new_filter, new_dryer]
 
 def get_sinkless_streams(units, p_chem_IDs):
     ss = []
@@ -1175,53 +1209,58 @@ def generate_DAG_vle_sharp(in_stream, chem_IDs=None, include_infeasible_edges=Fa
 
 #%%
 
-from apd.solvents_barrage import get_candidate_solvents_ranked_for_primary_extraction
-
-def perform_solvent_extraction(stream, solvent_ID):
+from apd.solvents_barrage import get_candidate_solvents_ranked, solvent_IDs
+solvent_prices = {solvent: 5. for solvent in solvent_IDs} # solvent price defaults to $5/kg
+def perform_solvent_extraction(stream, solvent_ID, partition_data={}, T=None, P=None,
+                               solvent_prices=solvent_prices):
     # try:
         # import pdb
         # pdb.set_trace()
         tmo.settings.set_thermo(list(stream.chemicals) + [solvent_ID])
         new_stream = tmo.Stream('new_stream')
+        #!!!
+        if T:
+            stream.T = T
+        if P:
+            stream.P = P
+            
         new_stream.T, new_stream.P = stream.T, stream.P
         for i in stream.chemicals:
             new_stream.imol[i.ID] = stream.imol[i.ID]
         
-        new_stream.imol[solvent_ID] = 2* new_stream.imol['Water']
+        fresh_solvent_stream = tmo.Stream(f'fresh_{solvent_ID}_stream',
+                                          price=solvent_prices[solvent_ID])
         
+        new_mixer = bst.Mixer(f'{solvent_ID}_extraction_mixer',
+                              ins=(new_stream, fresh_solvent_stream, ''),
+                              outs=('to_extraction'))
+        @new_mixer.add_specification(run=False)
+        def new_mixer_spec():
+            solvent_mol_req = 4*new_stream.imol['Water']
+            fresh_solvent_stream.imol[solvent_ID] = max(0, solvent_mol_req - new_mixer.ins[2].imol[solvent_ID])
+            new_mixer._run()
+        new_mixer.simulate() 
         # import pdb
         # pdb.set_trace()
         
         msms = None
         for N in [8, 7, 6, 5, 4, 3, 2, 1]:
             try:
-                partition_data = None
-                
-                for i in range(len(results_df.index)):
-                    if results_df.index[i] == solvent_ID:
-                        rl = list(results_df)
-                        partition_data={
-        
-                       'K': np.array([results_df[rl[0]][i], results_df[rl[3]][i], 
-                                     results_df[rl[1]][i], 1/results_df[rl[2]][i]]),
-                       
-                       'IDs': ('AdipicAcid', 'AceticAcid',
-                               'Water', '1-Tridecanol'),
-                
-                       'phi': 0.590 # Initial phase fraction guess. This is optional.
-                        }
-                msms = bst.MultiStageMixerSettlers(ID='MSMS', ins=new_stream, thermo=new_stream.thermo, outs=(), N_stages=N, solvent_ID=solvent_ID,
+                msms = bst.MultiStageMixerSettlers(ID=f'{solvent_ID}_extraction', 
+                                                   ins=new_mixer-0, thermo=new_stream.thermo, outs=(), N_stages=N, solvent_ID=solvent_ID,
                                                    partition_data = partition_data)
                 msms.simulate()
                 break
             except:
                 pass
         
-        return msms.extract, new_stream, msms
+        return msms.extract, new_stream, [new_mixer, msms]
     # except:
     #     return None, None, None
     
 def identical_streams(stream1, stream2, mol_compo_sig_figs=2, F_mol_sig_figs=0):
+    if stream1.F_mol==0 or stream2.F_mol==0:
+        return False
     for i in stream1.chemicals:
         if round(stream1.imol[i.ID]/stream1.F_mol, mol_compo_sig_figs)==\
             round(stream2.imol[i.ID]/stream2.F_mol, mol_compo_sig_figs)\
@@ -1248,10 +1287,12 @@ def connect_units(units, stream):
             if identical_streams(s1, s2):
                 s2.sink.ins[s2.sink.ins.index(s2)] = s1
                 # print(s1, s2, s1.sink, s2.sink, s1.source, s2.source)
+            
 #%% Run
 def get_separation_units(stream, products=[], plot_graph=False, print_progress=False, 
-                         connect_path_units=True, simulate_again_after_connecting=True,
-                         include_infeasible_edges=True, save_DAG=False):
+                         connect_path_units=True, simulate_again_after_connecting=False,
+                         include_infeasible_edges=True, save_DAG=False,
+                         solvent_prices=solvent_prices):
  
     
     extract, stream_for_DAG, msms = None, stream, None
@@ -1261,8 +1302,12 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
     
     stream_copy = Stream('stream_copy')
     stream_copy.copy_like(stream)
-    pre_DAG_path_units = add_crystallizer_and_filter(in_stream=stream_copy, solute=products[0],
-                                                     IDs=[f'{stream.ID}_crystallizer', f'{stream.ID}_filter'])
+    # stream_for_DAG.show()
+    pre_DAG_path_units = add_crystallizer_filter_dryer(in_stream=stream_copy, solute=products[0],
+                                                     IDs=[f'{stream.ID}_crystallizer', f'{stream.ID}_filter',
+                                                          f'{stream.ID}_dryer'])
+    
+    
     
     add_pre_DAG_path_units = False
     
@@ -1272,6 +1317,8 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
         pre_DAG_path_units[0].simulate()
         stream_for_DAG = pre_DAG_path_units[1].outs[1]
     
+    # print('\n\n\nStream for DAG\n')
+    # stream_for_DAG.show()
     has_products = False
     for p in products:
         if stream_for_DAG.imol[p]/stream_for_DAG.F_mol >= 0.01:
@@ -1280,18 +1327,26 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
     if has_products:
         if print_progress:
             print('Running solvents barrage ...')
-        # candidate_solvents, results_df = get_candidate_solvents_ranked_for_primary_extraction(stream=stream, 
-        #                               solute_ID='AdipicAcid', 
-        #                               impurity_IDs=['AceticAcid', 'AdipicAcid'],
-        #                               T=30.+273.15)
+            
+        candidate_solvents_dict, results_df = get_candidate_solvents_ranked(stream=stream, 
+                                      solute_ID=products[0], 
+                                      impurity_IDs=[c.ID for c in stream_for_DAG.chemicals if not c.ID in products],
+                                      T=stream.T)
         
         
-        # extract, stream_for_DAG, msms = None, stream, None
+        extract, stream_for_DAG, msms = None, stream, None
+        if print_progress:
+            print(f'Performing primary extraction using solvent: {list(candidate_solvents_dict.keys())[0]} ...')
         
-        # if candidate_solvents:
-        #     print(f'Performing primary extraction using solvent: {candidate_solvents[0]} ...')
-            # stream_for_DAG, new_stream, msms = perform_solvent_extraction(stream, candidate_solvents[0])
         
+        if list(candidate_solvents_dict.keys()): # if a candidate solvent is found
+            stream_for_DAG, new_stream, msms = perform_solvent_extraction(stream, 
+                                                                          list(candidate_solvents_dict.keys())[0], list(candidate_solvents_dict.values())[0],
+                                                                          solvent_prices=solvent_prices)
+            products.append(list(candidate_solvents_dict.keys())[0])
+            # msms[0].show(N=100)
+            # msms[1].show(N=100)
+    
         # %%
         
         if print_progress:
@@ -1397,7 +1452,8 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
     
         #%% Create system
         path_units = []
-        
+        if msms:
+            path_units.extend(msms)
         for edge in path_edges:
             try:
                 edge_units = edges_units_dict[edge]
@@ -1427,6 +1483,17 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
             if connect_path_units:
                 connect_units(path_units, stream)
                 
+                if msms:
+                    solvent_ID = msms[1].solvent_ID
+                    for u in path_units:
+                        for s in list(u.outs):
+                            if not s.sink:
+                                # print(tmo.settings.get_thermo())
+                                # s.show(N=100)
+                                if s.imol[solvent_ID]/s.F_mol >= 0.95:
+                                    extraction_mixer = msms[0]
+                                    s-2-extraction_mixer
+                                    extraction_mixer.simulate()
                 if simulate_again_after_connecting:
                     for u in path_units:
                         u.simulate()

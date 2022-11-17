@@ -27,7 +27,7 @@ class APDBatchCrystallizer(BatchCrystallizer):
                  solute=None,
                  solvent=None,
                  get_solubility_given_T=None, # mol-solute/(mol-solute+mol-solvent)
-                 T_range = (274., 372.) # K # when a target recovery is specified, a T will be solved for within this range
+                 T_range = (275.15, 371.15) # K # when a target recovery is specified, a T will be solved for within this range
                  ):
         
         BatchCrystallizer.__init__(self, ID, ins, outs, thermo,
