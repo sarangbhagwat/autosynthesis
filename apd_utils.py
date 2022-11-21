@@ -37,6 +37,7 @@ DAC = tmo.equilibrium.activity_coefficients.DortmundActivityCoefficients
 
 SolidsCentrifuge = bst.SolidsCentrifuge
 
+
 #%%
 def distill_to_azeotropic_composition(stream, LHK, 
                                       P=101325., x_bot=1e-3, k=1.2, 
@@ -729,7 +730,7 @@ def add_crystallizer_filter_dryer(in_stream, solute, target_recovery=0.99, tau=6
         new_dryer.simulate()
     except:
         breakpoint()
-    new_dryer.show()
+    # new_dryer.show()
     # new_crystallizer.show()
     # new_filter.show()
     # new_dryer.show()
@@ -1209,6 +1210,17 @@ def generate_DAG_vle_sharp(in_stream, chem_IDs=None, include_infeasible_edges=Fa
 
 #%%
 
+def get_valid_ID(ID):
+    valid_ID = ''
+    for i in ID:
+        if i==' ':
+            valid_ID += '__'
+        elif i=='-':
+            valid_ID += '_'
+        else:
+            valid_ID += i
+    return valid_ID
+
 from apd.solvents_barrage import get_candidate_solvents_ranked, solvent_IDs
 solvent_prices = {solvent: 5. for solvent in solvent_IDs} # solvent price defaults to $5/kg
 def perform_solvent_extraction(stream, solvent_ID, partition_data={}, T=None, P=None,
@@ -1227,11 +1239,15 @@ def perform_solvent_extraction(stream, solvent_ID, partition_data={}, T=None, P=
         new_stream.T, new_stream.P = stream.T, stream.P
         for i in stream.chemicals:
             new_stream.imol[i.ID] = stream.imol[i.ID]
+        solvent_price = 5.
+        try:
+            solvent_price = solvent_prices[solvent_ID]
+        except:
+            pass
+        fresh_solvent_stream = tmo.Stream(f'fresh_stream_{get_valid_ID(solvent_ID)}',
+                                          price=solvent_price)
         
-        fresh_solvent_stream = tmo.Stream(f'fresh_{solvent_ID}_stream',
-                                          price=solvent_prices[solvent_ID])
-        
-        new_mixer = bst.Mixer(f'{solvent_ID}_extraction_mixer',
+        new_mixer = bst.Mixer(f'extraction_mixer_{get_valid_ID(solvent_ID)}',
                               ins=(new_stream, fresh_solvent_stream, ''),
                               outs=('to_extraction'))
         @new_mixer.add_specification(run=False)
@@ -1246,7 +1262,7 @@ def perform_solvent_extraction(stream, solvent_ID, partition_data={}, T=None, P=
         msms = None
         for N in [8, 7, 6, 5, 4, 3, 2, 1]:
             try:
-                msms = bst.MultiStageMixerSettlers(ID=f'{solvent_ID}_extraction', 
+                msms = bst.MultiStageMixerSettlers(ID=f'extraction_{get_valid_ID(solvent_ID)}', 
                                                    ins=new_mixer-0, thermo=new_stream.thermo, outs=(), N_stages=N, solvent_ID=solvent_ID,
                                                    partition_data = partition_data)
                 msms.simulate()
@@ -1327,23 +1343,30 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
     if has_products:
         if print_progress:
             print('Running solvents barrage ...')
+        
+        Ts = list(np.linspace(10+273.15, 90+273.15, 10))
+        Ts.reverse()
+        
+        for T in Ts:
+            candidate_solvents_dict, results_df = get_candidate_solvents_ranked(stream=stream, 
+                                          solute_ID=products[0], 
+                                          impurity_IDs=[c.ID for c in stream_for_DAG.chemicals if not c.ID in products],
+                                          T=T)
             
-        candidate_solvents_dict, results_df = get_candidate_solvents_ranked(stream=stream, 
-                                      solute_ID=products[0], 
-                                      impurity_IDs=[c.ID for c in stream_for_DAG.chemicals if not c.ID in products],
-                                      T=stream.T)
-        
-        
-        extract, stream_for_DAG, msms = None, stream, None
-        if print_progress:
-            print(f'Performing primary extraction using solvent: {list(candidate_solvents_dict.keys())[0]} ...')
-        
-        
-        if list(candidate_solvents_dict.keys()): # if a candidate solvent is found
-            stream_for_DAG, new_stream, msms = perform_solvent_extraction(stream, 
-                                                                          list(candidate_solvents_dict.keys())[0], list(candidate_solvents_dict.values())[0],
-                                                                          solvent_prices=solvent_prices)
-            products.append(list(candidate_solvents_dict.keys())[0])
+            
+            extract, stream_for_DAG, msms = None, stream, None
+            
+            # print(list(candidate_solvents_dict.keys()))
+            
+            if list(candidate_solvents_dict.keys()): # if a candidate solvent is found
+                if print_progress:
+                    print(f'Performing primary extraction at{T-273.15} degC using solvent: {list(candidate_solvents_dict.keys())[0]} ...')
+                stream_for_DAG, new_stream, msms = perform_solvent_extraction(stream, 
+                                                                              list(candidate_solvents_dict.keys())[0], list(candidate_solvents_dict.values())[0],
+                                                                              solvent_prices=solvent_prices,
+                                                                              T=T)
+                products.append(list(candidate_solvents_dict.keys())[0])
+                break
             # msms[0].show(N=100)
             # msms[1].show(N=100)
     

@@ -1096,13 +1096,18 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
     # import pdb
     # pdb.set_trace()
     # print(results)
+    # print([results[rl[8]][i] for i in range(len(results[rl[0]]))])
     candidate_solvent_indices = [i for i in range(len(results[rl[0]])) 
                                       if (not results[rl[8]][i]) 
                                       # and results[rl[3]][i] < 1.
                                       # and results[rl[4]][i] < 1.
-                                      and results[rl[0]][i] > 2.
-                                      and results[rl[2]][i] < 0.05
-                                      and results[rl[1]][i] < 0.05
+                                      
+                                       and results[rl[0]][i] > 1.5
+                                       and results[rl[1]][i]/results[rl[0]][i] < 0.2
+                                       and results[rl[2]][i]/results[rl[0]][i] < 0.2
+                                      
+                                      # and results[rl[1]][i] < 0.05
+                                      # and results[rl[2]][i] < 0.05
                                       and abs(results[rl[6]][i]) > 20
                                       # and abs(results[rl[5]][i]) > 20
                                       ]
