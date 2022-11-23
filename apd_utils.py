@@ -22,7 +22,11 @@ from apd.units import APDBatchCrystallizer
 from thermosteam import Chemical, Stream
 from copy import deepcopy 
 from warnings import filterwarnings
-from networkx.classes.function import path_weight
+from networkx.classes.function import path_weight        
+import networkx as nx
+import matplotlib.pyplot as plt
+from itertools import combinations
+        
 
 # from apd.apd_utils_c import mock_pressure_swing_distillation, distill_to_azeotropic_composition
 filterwarnings("ignore")
@@ -1351,7 +1355,8 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
             candidate_solvents_dict, results_df = get_candidate_solvents_ranked(stream=stream, 
                                           solute_ID=products[0], 
                                           impurity_IDs=[c.ID for c in stream_for_DAG.chemicals if not c.ID in products],
-                                          T=T)
+                                          T=T,
+                                          plot_Ks=False)
             
             
             extract, stream_for_DAG, msms = None, stream, None
@@ -1393,21 +1398,18 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
                                                                   include_infeasible_edges=include_infeasible_edges,
                                                                   products=products)
         
-        # if save_DAG:
-        with open('DAG.txt', 'w') as f:
-            for k, v in edges_dict.items():
-                # try:
-                f.write(str(k[0]) + "    " + str(k[1]) + "    " + str(v) + "\n")
-                # except:
-                #     import pdb
-                #     pdb.set_trace()
-    
-        import networkx as nx
-        import matplotlib.pyplot as plt
-        from itertools import combinations
+        # # if save_DAG:
+        # with open('DAG.txt', 'w') as f:
+        #     for k, v in edges_dict.items():
+        #         f.write(str(k[0]) + "    " + str(k[1]) + "    " + str(v) + "\n")
+                
+
+        # G=nx.read_weighted_edgelist("./DAG.txt", delimiter="    ")
         
-        G=nx.read_weighted_edgelist("./DAG.txt", delimiter="    ")
-        
+        G = nx.Graph()
+        for k,v in edges_dict.items():
+            G.add_edge(str(k[0]), str(k[1]), weight=v)
+            
         # for (i,j,d) in G.edges(data=True):
         #     print(i,j,d['weight'])
             

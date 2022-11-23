@@ -62,7 +62,7 @@ def run_solvents_barrage(stream, # Stream from which you wish to extract the sol
                          stream_modifiers='baseline_stream', # 'baseline_stream' to analyze the "stream" passed in arguments; 'impurity_free_stream' to remove the impurities listed in impurity_IDs before performing analyses; 'solute_in_pure_water' to analyze simply for the solute in pure water
                          # show_all_mixer_settlers=False,
                          plot_Ks=True,
-                         save_excel=True,
+                         save_excel=False,
                          save_K_plots=True,
                          criterion = 'Partition of solute into extract',
                          print_result_with_optimal_criterion=False): 
@@ -478,37 +478,38 @@ def run_solvents_barrage(stream, # Stream from which you wish to extract the sol
     17: 'R', 18: 'S', 19: 'T', 20: 'U', 21: 'V', 22: 'W', 23: 'X', 24: 'Y', 25: 'Z'}
     
     final_results_df = None
-    with pd.ExcelWriter(file_to_save+'.xlsx') as writer:
-        final_results_df = results_df.transpose()
-        final_results_df.to_excel(writer, sheet_name='All solvent candidates')
-        workbook  = writer.book
-        worksheet = writer.sheets['All solvent candidates']
-        # wrap_format = workbook.add_format({'text_wrap': True})
-        # worksheet.set_column('A:A', None, wrap_format)
-        # worksheet.set_row('A:A', None, wrap_format)
-        # writer.save()
-        # Add a header format.
-        header_format = workbook.add_format({
-            'bold': True,
-            'text_wrap': True,
-            'valign': 'top',
-            # 'fg_color': '#D7E4BC',
-            'border': 1})
-        decimal_2_format = workbook.add_format({'num_format': '#,##0.00'})
-        decimal_3_format = workbook.add_format({'num_format': '#,##0.000'})
-        worksheet.set_column('A:A', 18, decimal_2_format)
-        
-        # Write all cells in the specified number format.
-        for i in range(len(final_results_df.columns.values)):
-            worksheet.set_column(map_dict[i+1]+':'+map_dict[i+1], 18, decimal_2_format)
-        # worksheet.set_row(0, 28, decimal_2_format)
-        
-        # Write the column headers with the defined format.
-        for col_num, value in enumerate(final_results_df.columns.values):
-            worksheet.write(0, col_num + 1, value, header_format)
-        # Write the row headers with the defined format.
-        for row_num, value in enumerate(final_results_df.index.values):
-            worksheet.write(row_num + 1, 0, value, header_format)
+    final_results_df = results_df.transpose()
+    if save_excel:
+        with pd.ExcelWriter(file_to_save+'.xlsx') as writer:
+            final_results_df.to_excel(writer, sheet_name='All solvent candidates')
+            workbook  = writer.book
+            worksheet = writer.sheets['All solvent candidates']
+            # wrap_format = workbook.add_format({'text_wrap': True})
+            # worksheet.set_column('A:A', None, wrap_format)
+            # worksheet.set_row('A:A', None, wrap_format)
+            # writer.save()
+            # Add a header format.
+            header_format = workbook.add_format({
+                'bold': True,
+                'text_wrap': True,
+                'valign': 'top',
+                # 'fg_color': '#D7E4BC',
+                'border': 1})
+            decimal_2_format = workbook.add_format({'num_format': '#,##0.00'})
+            decimal_3_format = workbook.add_format({'num_format': '#,##0.000'})
+            worksheet.set_column('A:A', 18, decimal_2_format)
+            
+            # Write all cells in the specified number format.
+            for i in range(len(final_results_df.columns.values)):
+                worksheet.set_column(map_dict[i+1]+':'+map_dict[i+1], 18, decimal_2_format)
+            # worksheet.set_row(0, 28, decimal_2_format)
+            
+            # Write the column headers with the defined format.
+            for col_num, value in enumerate(final_results_df.columns.values):
+                worksheet.write(0, col_num + 1, value, header_format)
+            # Write the row headers with the defined format.
+            for row_num, value in enumerate(final_results_df.index.values):
+                worksheet.write(row_num + 1, 0, value, header_format)
     
     #%% Plot results
     # for i in range(len(final_results_df.columns)):
@@ -584,8 +585,8 @@ def run_solvents_barrage_v2(stream, # Stream from which you wish to extract the 
                          solvent_IDs=solvent_IDs, # List of solvents to run the barrage for; defaults to a list of 25 common organic solvents
                          stream_modifiers='baseline_stream', # 'baseline_stream' to analyze the "stream" passed in arguments; 'impurity_free_stream' to remove the impurities listed in impurity_IDs before performing analyses; 'solute_in_pure_water' to analyze simply for the solute in pure water
                          # show_all_mixer_settlers=False,
-                         plot_Ks=True,
-                         save_excel=True,
+                         plot_Ks=False,
+                         save_excel=False,
                          save_K_plots=True,
                          criterion = 'Partition of solute into extract',
                          print_result_with_optimal_criterion=False): 
@@ -600,6 +601,8 @@ def run_solvents_barrage_v2(stream, # Stream from which you wish to extract the 
                 chemical.at_state(phase)
                 chemical.phase_ref = phase
             test_env_chems.append(chemical)
+            if not chemical.Pc:
+                chemical.Pc = tmo.Chemical('H2O').Pc
             if not chemical.Psat:
                 chemical.copy_models_from(tmo.Chemical('H2O'), ('Psat',))
             if not chemical.Hvap:
@@ -1001,37 +1004,38 @@ def run_solvents_barrage_v2(stream, # Stream from which you wish to extract the 
     17: 'R', 18: 'S', 19: 'T', 20: 'U', 21: 'V', 22: 'W', 23: 'X', 24: 'Y', 25: 'Z'}
     
     final_results_df = None
-    with pd.ExcelWriter(file_to_save+'.xlsx') as writer:
-        final_results_df = results_df.transpose()
-        final_results_df.to_excel(writer, sheet_name='All solvent candidates')
-        workbook  = writer.book
-        worksheet = writer.sheets['All solvent candidates']
-        # wrap_format = workbook.add_format({'text_wrap': True})
-        # worksheet.set_column('A:A', None, wrap_format)
-        # worksheet.set_row('A:A', None, wrap_format)
-        # writer.save()
-        # Add a header format.
-        header_format = workbook.add_format({
-            'bold': True,
-            'text_wrap': True,
-            'valign': 'top',
-            # 'fg_color': '#D7E4BC',
-            'border': 1})
-        decimal_2_format = workbook.add_format({'num_format': '#,##0.00'})
-        decimal_3_format = workbook.add_format({'num_format': '#,##0.000'})
-        worksheet.set_column('A:A', 18, decimal_2_format)
-        
-        # Write all cells in the specified number format.
-        for i in range(len(final_results_df.columns.values)):
-            worksheet.set_column(map_dict[i+1]+':'+map_dict[i+1], 18, decimal_2_format)
-        # worksheet.set_row(0, 28, decimal_2_format)
-        
-        # Write the column headers with the defined format.
-        for col_num, value in enumerate(final_results_df.columns.values):
-            worksheet.write(0, col_num + 1, value, header_format)
-        # Write the row headers with the defined format.
-        for row_num, value in enumerate(final_results_df.index.values):
-            worksheet.write(row_num + 1, 0, value, header_format)
+    final_results_df = results_df.transpose()
+    if save_excel:
+        with pd.ExcelWriter(file_to_save+'.xlsx') as writer:
+            final_results_df.to_excel(writer, sheet_name='All solvent candidates')
+            workbook  = writer.book
+            worksheet = writer.sheets['All solvent candidates']
+            # wrap_format = workbook.add_format({'text_wrap': True})
+            # worksheet.set_column('A:A', None, wrap_format)
+            # worksheet.set_row('A:A', None, wrap_format)
+            # writer.save()
+            # Add a header format.
+            header_format = workbook.add_format({
+                'bold': True,
+                'text_wrap': True,
+                'valign': 'top',
+                # 'fg_color': '#D7E4BC',
+                'border': 1})
+            decimal_2_format = workbook.add_format({'num_format': '#,##0.00'})
+            decimal_3_format = workbook.add_format({'num_format': '#,##0.000'})
+            worksheet.set_column('A:A', 18, decimal_2_format)
+            
+            # Write all cells in the specified number format.
+            for i in range(len(final_results_df.columns.values)):
+                worksheet.set_column(map_dict[i+1]+':'+map_dict[i+1], 18, decimal_2_format)
+            # worksheet.set_row(0, 28, decimal_2_format)
+            
+            # Write the column headers with the defined format.
+            for col_num, value in enumerate(final_results_df.columns.values):
+                worksheet.write(0, col_num + 1, value, header_format)
+            # Write the row headers with the defined format.
+            for row_num, value in enumerate(final_results_df.index.values):
+                worksheet.write(row_num + 1, 0, value, header_format)
     
     #%% Plot results
     # for i in range(len(final_results_df.columns)):
@@ -1044,7 +1048,7 @@ def run_solvents_barrage_v2(stream, # Stream from which you wish to extract the 
     
     
     final_results_df.sort_values(by=final_results_df.columns[0], inplace=True)
-    ax1 = final_results_df.plot.barh( y=final_results_df.columns[0:3], figsize=(40,30), fontsize=52., ylabel=final_results_df.columns[i])
+    ax1 = final_results_df.plot.barh( y=final_results_df.columns[0:3], figsize=(40,30), fontsize=52., ylabel=final_results_df.columns[len(final_results_df.columns.values)-1])
     # ax.xlabel('xlabel', fontsize=18)
     plt.xlabel('Partition coefficients at ' + str(T-273.15) + ' deg Celsius [(mol/mol)/(mol/mol)]', fontsize=52)
     plt.legend(loc='lower right', prop={'size': 52})
@@ -1052,7 +1056,7 @@ def run_solvents_barrage_v2(stream, # Stream from which you wish to extract the 
     fig1.savefig(file_to_save+'___'+ 'Ks-solute-solvent-water'+'.png', bbox_inches='tight')
     
     
-    ax2 = final_results_df.plot.barh( y=final_results_df.columns[3:5], figsize=(40,30), fontsize=52., ylabel=final_results_df.columns[i])
+    ax2 = final_results_df.plot.barh( y=final_results_df.columns[3:5], figsize=(40,30), fontsize=52., ylabel=final_results_df.columns[len(final_results_df.columns.values)-1])
     # ax.xlabel('xlabel', fontsize=18)
     plt.xlabel('Partition coefficients at ' + str(T-273.15) + ' deg Celsius [(mol/mol)/(mol/mol)]', fontsize=52)
     plt.legend(loc='lower right', prop={'size': 52})
@@ -1069,7 +1073,7 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
                      P=None,
                      solvent_to_water_mol_ratio_range=(0.25, 4.),
                      stream_modifiers='baseline_stream', # String: 'baseline_stream' to analyze the "stream" passed in arguments; 'impurity_free_stream' to remove the impurities listed in impurity_IDs before performing analyses; 'solute_in_pure_water' to analyze simply for the solute in pure water)
-                     plot_Ks=True,
+                     plot_Ks=False,
                      save_excel=False,
                      save_K_plots=False,):
     #!!!
