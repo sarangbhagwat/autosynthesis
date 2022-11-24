@@ -1,0 +1,16 @@
+LICENSE
+README.md
+setup.py
+autosynthesis/__init__.py
+autosynthesis/apd_utils_c.py
+autosynthesis/graph_utils.py
+autosynthesis/solvents_barrage.py
+autosynthesis/solvents_barrage_example.py
+autosynthesis/units.py
+autosynthesis/upcs_tools.py
+autosynthesis/utils.py
+autosynthesis.egg-info/PKG-INFO
+autosynthesis.egg-info/SOURCES.txt
+autosynthesis.egg-info/dependency_links.txt
+autosynthesis.egg-info/requires.txt
+autosynthesis.egg-info/top_level.txt
