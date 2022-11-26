@@ -10,7 +10,7 @@ from setuptools import setup
 setup(
     name='autosynthesis',
     packages=['autosynthesis'],
-    version='0.0.6',    
+    version='0.0.7',    
     description='A toolkit for automated synthesis of biorefinery processes including pretreatment, conversion, separation, and upgrading.',
     url='https://github.com/sarangbhagwat/autosynthesis',
     author='Sarang S. Bhagwat',
@@ -24,7 +24,7 @@ setup(
                       'biosteam==2.33.2',
                       'thermosteam==0.29.1',
                       'flexsolve',
-                      'pint==0.9',
+                      'pint==0.14',
                       'xlsxwriter',
                       ],
 

@@ -9,6 +9,23 @@ import thermosteam as tmo
 import flexsolve as flx
 import numpy as np
 import math
+import biosteam as bst
+import thermosteam as tmo
+from biosteam.units.decorators import cost
+
+ParallelRxn = tmo.reaction.ParallelReaction
+# Chemical Engineering Plant Cost Index from Chemical Engineering Magzine
+# (https://www.chemengonline.com/the-magazine/)
+CEPCI = {1997: 386.5,
+         1998: 389.5,
+         2007: 525.4,
+         2009: 521.9,
+         2010: 550.8,
+         2011: 585.7,
+         2012: 584.6,
+         2013: 567.3,
+         2014: 576.1,
+         2016: 541.7}
 
 
 BatchCrystallizer = bst.BatchCrystallizer
@@ -16,7 +33,7 @@ IQ_interpolation = flx.IQ_interpolation
 ln = math.log
 exp = math.exp
 
-__all__ = ('APDBatchCrystallizer')
+__all__ = ('APDBatchCrystallizer', 'WastewaterSystemCost')
 #%%
 class APDBatchCrystallizer(BatchCrystallizer):
     
@@ -96,3 +113,9 @@ class APDBatchCrystallizer(BatchCrystallizer):
         # self.effective_recovery = effective_recovery = target_recovery
         self.T = T = self.get_T_given_target_recovery(target_recovery)
         
+
+#%%
+# Total cost of wastewater treatment is combined into this placeholder
+@cost(basis='Flow rate', ID='Wastewater system', units='kg/hr', 
+      kW=7018.90125, S=393100, cost=50280080, CE=CEPCI[2010], n=0.6, BM=1)
+class WastewaterSystemCost(bst.Unit): pass

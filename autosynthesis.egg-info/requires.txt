@@ -4,5 +4,5 @@ matplotlib>=3.5.2
 biosteam==2.33.2
 thermosteam==0.29.1
 flexsolve
-pint==0.9
+pint==0.14
 xlsxwriter

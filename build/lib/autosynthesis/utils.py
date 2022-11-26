@@ -18,6 +18,7 @@ import numpy as np
 from math import log as ln
 from matplotlib import pyplot as plt
 from .units import APDBatchCrystallizer
+from .solvents_barrage import get_candidate_solvents_ranked, solvent_IDs
 from thermosteam import Chemical, Stream
 from copy import deepcopy 
 from warnings import filterwarnings
@@ -1225,7 +1226,6 @@ def get_valid_ID(ID):
             valid_ID += i
     return valid_ID
 
-from apd.solvents_barrage import get_candidate_solvents_ranked, solvent_IDs
 solvent_prices = {solvent: 5. for solvent in solvent_IDs} # solvent price defaults to $5/kg
 def perform_solvent_extraction(stream, solvent_ID, partition_data={}, T=None, P=None,
                                solvent_prices=solvent_prices):
