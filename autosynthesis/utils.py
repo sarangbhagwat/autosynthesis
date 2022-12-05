@@ -1086,10 +1086,15 @@ def get_cost_sharp_split(edge, map_dict, feed_stream, column_type='ShortcutColum
 
 
 
-def generate_DAG_vle_sharp(in_stream, chem_IDs=None, include_infeasible_edges=False, column_type='ShortcutColumn', products=None):
+def generate_DAG_vle_sharp(in_stream, chem_IDs=None, include_infeasible_edges=False, column_type='ShortcutColumn', products=None, cutoff_massfrac=0.005):
     # chem_IDs = in_stream.products + in_stream.impurities
     
     tmo.settings.set_thermo(in_stream.chemicals)
+    
+    for i in in_stream.chemicals:
+        if in_stream.imass[i.ID]/in_stream.F_mass<cutoff_massfrac:
+            in_stream.imol[i.ID] = 0.
+    
     if not chem_IDs:
         chem_IDs = [i.ID for i in get_vle_components_sorted(in_stream)]
     
@@ -1256,8 +1261,8 @@ def perform_solvent_extraction(stream, solvent_ID, partition_data={}, T=None, P=
                               outs=('to_extraction'))
         @new_mixer.add_specification(run=False)
         def new_mixer_spec():
-            solvent_mol_req = 4*new_stream.imol['Water']
-            fresh_solvent_stream.imol[solvent_ID] = max(0, solvent_mol_req - new_mixer.ins[2].imol[solvent_ID])
+            solvent_vol_req = 2.5*new_stream.ivol['Water']
+            fresh_solvent_stream.ivol[solvent_ID] = max(0, solvent_vol_req - new_mixer.ins[2].ivol[solvent_ID])
             new_mixer._run()
         new_mixer.simulate() 
         # import pdb
@@ -1293,6 +1298,28 @@ def identical_streams(stream1, stream2, mol_compo_sig_figs=2, F_mol_sig_figs=0):
             return False
     return True
 
+# def identical_streams(stream1, stream2, mass_compo_sig_figs=2, F_mass_sig_figs=2, cutoff_massfrac=0.01):
+#     if stream1.F_mass==0 or stream2.F_mass==0:
+#         return False
+#     if not float(f'{stream1.F_mass:.{F_mass_sig_figs}g}')==\
+#         float(f'{stream2.F_mass:.{F_mass_sig_figs}g}'):
+#             return False
+#     for i in stream1.chemicals:
+#         if stream1.imass[i.ID]/stream1.F_mass >= cutoff_massfrac or\
+#             stream2.imass[i.ID]/stream1.F_mass >= cutoff_massfrac:
+#             # if round(stream1.imass[i.ID]/stream1.F_mass, mass_compo_sig_figs)==\
+#             #     round(stream2.imass[i.ID]/stream2.F_mass, mass_compo_sig_figs):
+#             print(i.ID, float(f'{stream1.imass[i.ID]/stream1.F_mass:.{mass_compo_sig_figs}g}'),
+#                 float(f'{stream2.imass[i.ID]/stream2.F_mass:.{mass_compo_sig_figs}g}'))
+#             if float(f'{stream1.imass[i.ID]/stream1.F_mass:.{mass_compo_sig_figs}g}')==\
+#                 float(f'{stream2.imass[i.ID]/stream2.F_mass:.{mass_compo_sig_figs}g}'):
+#                         # return True
+#                         pass
+#             else:
+#                 return False
+#     return True
+
+
 def connect_units(units, stream):
     
     all_streams = [stream]
@@ -1305,13 +1332,19 @@ def connect_units(units, stream):
     for s1 in sinkless_streams:
         for s2 in sourceless_streams:
             if identical_streams(s1, s2):
-                s2.sink.ins[s2.sink.ins.index(s2)] = s1
+                if s2.sink:
+                    s2.sink.ins[s2.sink.ins.index(s2)] = s1
                 # print(s1, s2, s1.sink, s2.sink, s1.source, s2.source)
-            
+
+def remove_trace_chemicals(stream, trace_massfrac_threshold=0.01):
+    for i in stream.chemicals:
+        if stream.imass[i.ID]/stream.F_mass < trace_massfrac_threshold:
+            stream.imol[i.ID] = 0.
+
 #%% Run
 def get_separation_units(stream, products=[], plot_graph=False, print_progress=False, 
                          connect_path_units=True, simulate_again_after_connecting=False,
-                         include_infeasible_edges=True, save_DAG=False,
+                         include_infeasible_edges=False, save_DAG=False,
                          solvent_prices=solvent_prices):
  
     
@@ -1390,7 +1423,7 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
                 # stream_for_DAG.imol['Water'] = 0.
                 # if stream_for_DAG.imass[i_ID]/stream_for_DAG.F_mass < 0.005:
                 #     stream_for_DAG.imass[i_ID] = 0.
-                
+        remove_trace_chemicals(stream_for_DAG)
         if print_progress:
             print('Generating graph ...')
         edges_dict, map_dict, nodes_dict, edges_units_dict, terminal_nodes = generate_DAG_vle_sharp(stream_for_DAG,
