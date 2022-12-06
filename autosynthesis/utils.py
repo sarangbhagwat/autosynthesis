@@ -786,7 +786,7 @@ def run_sequential_distillation(stream, products, impurities,
                     try:
                         new_col = add_distillation_column(in_stream=s,
                                                           LHK=LHK,
-                                                          Lr=0.99999, Hr=0.99999,
+                                                          Lr=0.9999, Hr=0.9999,
                                                           P=101325./100,
                                                           column_type ='BinaryDistillation'
                                                           )
@@ -796,7 +796,7 @@ def run_sequential_distillation(stream, products, impurities,
                         try:
                             new_col = add_distillation_column(in_stream=s,
                                                               LHK=LHK,
-                                                              Lr=0.99999, Hr=0.99999,
+                                                              Lr=0.9999, Hr=0.9999,
                                                               P=101325./10,
                                                               column_type ='BinaryDistillation'
                                                               )
@@ -816,7 +816,7 @@ def run_sequential_distillation(stream, products, impurities,
                     try:
                         new_col = add_distillation_column(in_stream=s,
                                                           LHK=LHK,
-                                                          Lr=0.99999, Hr=0.99999,
+                                                          Lr=0.9999, Hr=0.9999,
                                                           P=101325./100,
                                                           column_type ='ShortcutColumn'
                                                           )
@@ -826,7 +826,7 @@ def run_sequential_distillation(stream, products, impurities,
                     except:
                         new_col = add_distillation_column(in_stream=s,
                                                           LHK=LHK,
-                                                          Lr=0.99999, Hr=0.99999,
+                                                          Lr=0.9999, Hr=0.9999,
                                                           P=101325./10,
                                                           column_type ='ShortcutColumn'
                                                           )
@@ -1278,7 +1278,6 @@ def perform_solvent_extraction(stream, solvent_ID, partition_data={}, T=None, P=
                 break
             except:
                 pass
-        
         return msms.extract, new_stream, [new_mixer, msms]
     # except:
     #     return None, None, None
@@ -1336,7 +1335,7 @@ def connect_units(units, stream):
                     s2.sink.ins[s2.sink.ins.index(s2)] = s1
                 # print(s1, s2, s1.sink, s2.sink, s1.source, s2.source)
 
-def remove_trace_chemicals(stream, trace_massfrac_threshold=0.01):
+def remove_trace_chemicals(stream, trace_massfrac_threshold=0.02):
     for i in stream.chemicals:
         if stream.imass[i.ID]/stream.F_mass < trace_massfrac_threshold:
             stream.imol[i.ID] = 0.
@@ -1387,11 +1386,12 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
         for T in Ts:
             candidate_solvents_dict, results_df = get_candidate_solvents_ranked(stream=stream, 
                                           solute_ID=products[0], 
-                                          impurity_IDs=[c.ID for c in stream_for_DAG.chemicals if not c.ID in products],
+                                          impurity_IDs=[c.ID for c in stream_for_DAG.vle_chemicals if (not c.ID in products and stream_for_DAG.imol[c.ID]>0.)],
                                           T=T,
                                           plot_Ks=False)
             
-            
+            # stream.show(N=100)
+            # print(products[0], [c.ID for c in stream_for_DAG.vle_chemicals if ((not c.ID in products) and (stream_for_DAG.imol[c.ID]>0.))])
             extract, stream_for_DAG, msms = None, stream, None
             
             # print(list(candidate_solvents_dict.keys()))
@@ -1399,14 +1399,39 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
             if list(candidate_solvents_dict.keys()): # if a candidate solvent is found
                 if print_progress:
                     print(f'Performing primary extraction at{T-273.15} degC using solvent: {list(candidate_solvents_dict.keys())[0]} ...')
+                
+                solute_ID, temp_partition_data = list(candidate_solvents_dict.keys())[0], list(candidate_solvents_dict.values())[0]
+                
+                temp_IDs = temp_partition_data['IDs']
+                IDs = []
+                excluded_indices = []
+                for i in range(len(temp_IDs)):
+                    if temp_IDs[i] in IDs:
+                        excluded_indices.append(i)
+                    else:
+                        IDs.append(temp_IDs[i])
+                temp_K = temp_partition_data['K']
+                K=[temp_K[j] for j in range(len(temp_K)) if not j in excluded_indices]
+                for i in range(len(K)):
+                    if K[i]==0. or K[i]==0:
+                        K[i] = 1e-4
+                partition_data = dict(IDs=IDs, 
+                            K=np.array(K),
+                            phi = 0.5)
+                # print(temp_K, K)
+                
                 stream_for_DAG, new_stream, msms = perform_solvent_extraction(stream, 
-                                                                              list(candidate_solvents_dict.keys())[0], list(candidate_solvents_dict.values())[0],
+                                                                              solute_ID, 
+                                                                              partition_data,
                                                                               solvent_prices=solvent_prices,
                                                                               T=T)
+                # msms[1].show(N=100)
+                # msms[1].show('cwt100')
+                # print(msms[1].partition_data)
+                # print(msms[1].N_stages)
                 products.append(list(candidate_solvents_dict.keys())[0])
                 break
-            # msms[0].show(N=100)
-            # msms[1].show(N=100)
+            
     
         # %%
         
@@ -1538,7 +1563,6 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
         
         else:
             if connect_path_units:
-                connect_units(path_units, stream)
                 
                 if msms:
                     solvent_ID = msms[1].solvent_ID
@@ -1551,6 +1575,10 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
                                     extraction_mixer = msms[0]
                                     s-2-extraction_mixer
                                     extraction_mixer.simulate()
+                                    # extraction_mixer.show(N=100)
+                
+                connect_units(path_units, stream)
+                
                 if simulate_again_after_connecting:
                     for u in path_units:
                         u.simulate()

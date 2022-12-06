@@ -586,8 +586,8 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
                                       # and results[rl[4]][i] < 1.
                                       
                                        and results[rl[0]][i] > 1.5
-                                       and results[rl[1]][i]/results[rl[0]][i] < 0.2
-                                       and results[rl[2]][i]/results[rl[0]][i] < 0.2
+                                       and results[rl[1]][i]/results[rl[0]][i] < 0.1
+                                       and results[rl[2]][i]/results[rl[0]][i] < 0.1
                                       
                                       # and results[rl[1]][i] < 0.05
                                       # and results[rl[2]][i] < 0.05

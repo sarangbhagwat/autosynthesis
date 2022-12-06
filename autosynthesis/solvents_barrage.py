@@ -432,13 +432,24 @@ def run_solvents_barrage(stream, # Stream from which you wish to extract the sol
     # %% Unit initialization and tests
     solvent_to_run = results_list[0][0]
     set_solvent(solvent_to_run)
-    partition_data = dict(IDs=(solute_ID, 'Water', solvent_to_run,
-                                impurity_IDs[0], impurity_IDs[1],), 
-                K=np.array([1./results_dict[solvent_to_run][1],
-                            1/results_dict[solvent_to_run][2],
-                            results_dict[solvent_to_run][3],
-                           results_dict[solvent_to_run][5],
-                           results_dict[solvent_to_run][6]]),
+    temp_IDs = [solute_ID, 'Water', solvent_to_run,
+                                impurity_IDs[0], impurity_IDs[1],]
+    IDs = []
+    excluded_indices = []
+    for i in range(len(temp_IDs)):
+        if not temp_IDs[i] in IDs:
+            IDs.append(temp_IDs[i])
+            excluded_indices.append(i)
+    temp_K = np.array([1./results_dict[solvent_to_run][1],
+                1/results_dict[solvent_to_run][2],
+                results_dict[solvent_to_run][3],
+               results_dict[solvent_to_run][5],
+               results_dict[solvent_to_run][6]])
+    
+    K=[temp_K[j] for j in range(len(temp_K)) if not j in excluded_indices]
+    
+    partition_data = dict(IDs=IDs, 
+                K=K,
                 phi = 0.5)
     
     MS = bst.units.MultiStageMixerSettlers('MS', ins = (process_stream, solvent_stream),
