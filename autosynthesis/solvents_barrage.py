@@ -50,7 +50,9 @@ solvent_IDs = [
                 # 'Water',
                 'Benzene',
                 '143-28-2', # CAS number for Oleyl alcohol
-                'Tetrahydrofuran'
+                'Tetrahydrofuran',
+                'EthylAcetate',
+                
                 ]
 
 
@@ -593,6 +595,7 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
     # print([results[rl[8]][i] for i in range(len(results[rl[0]]))])
     candidate_solvent_indices = [i for i in range(len(results[rl[0]])) 
                                       if (not results[rl[8]][i]) 
+                                      # and (not results[rl[7]][i])
                                       # and results[rl[3]][i] < 1.
                                       # and results[rl[4]][i] < 1.
                                       

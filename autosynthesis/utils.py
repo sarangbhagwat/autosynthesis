@@ -451,60 +451,60 @@ ShortcutColumn = bst.units.ShortcutColumn
 Flash = bst.Flash
 sys_from_units = bst.System.from_units
 
-def add_distillation_column(in_stream,
-                            LHK, 
-                            Lr, Hr,
-                            column_type='BinaryDistillation',
-                            ID=None,
-                            k=1.05, P=101325., 
-                            is_divided=True,
-                            partial_condenser=False,
-                            vessel_material='Stainless steel 316',
-                            ):
-    if not ID:
-        ID=f'{in_stream.ID}_{column_type}'
-    new_column = None
-    if column_type =='BinaryDistillation':
-        new_column = BinaryDistillation(ID, ins=in_stream, outs=(f'{ID}_0', f'{ID}_1'),
-                                            LHK=LHK,
-                                            is_divided=is_divided,
-                                            product_specification_format='Recovery',
-                                            Lr=Lr, Hr=Hr, k=k, P=P,
-                                            vessel_material=vessel_material,
-                                            partial_condenser=partial_condenser,
-                                            # condenser_thermo = ideal_thermo,
-                                            # boiler_thermo = ideal_thermo,
-                                            # thermo=ideal_thermo,
-                                            )
-    elif column_type =='ShortcutColumn':
-        new_column = ShortcutColumn(ID, ins=in_stream, outs=(f'{ID}_0', f'{ID}_1'),
-                                            LHK=LHK,
-                                            is_divided=is_divided,
-                                            product_specification_format='Recovery',
-                                            Lr=Lr, Hr=Hr, k=k, P=P,
-                                            vessel_material=vessel_material,
-                                            partial_condenser=partial_condenser,
-                                            # condenser_thermo = ideal_thermo,
-                                            # boiler_thermo = ideal_thermo,
-                                            # thermo=ideal_thermo,
-                                            )
-    return new_column
+# def add_distillation_column(in_stream,
+#                             LHK, 
+#                             Lr, Hr,
+#                             column_type='BinaryDistillation',
+#                             ID=None,
+#                             k=1.05, P=101325., 
+#                             is_divided=True,
+#                             partial_condenser=False,
+#                             vessel_material='Stainless steel 316',
+#                             ):
+#     if not ID:
+#         ID=f'{in_stream.ID}_{column_type}'
+#     new_column = None
+#     if column_type =='BinaryDistillation':
+#         new_column = BinaryDistillation(ID, ins=in_stream, outs=(f'{ID}_0', f'{ID}_1'),
+#                                             LHK=LHK,
+#                                             is_divided=is_divided,
+#                                             product_specification_format='Recovery',
+#                                             Lr=Lr, Hr=Hr, k=k, P=P,
+#                                             vessel_material=vessel_material,
+#                                             partial_condenser=partial_condenser,
+#                                             # condenser_thermo = ideal_thermo,
+#                                             # boiler_thermo = ideal_thermo,
+#                                             # thermo=ideal_thermo,
+#                                             )
+#     elif column_type =='ShortcutColumn':
+#         new_column = ShortcutColumn(ID, ins=in_stream, outs=(f'{ID}_0', f'{ID}_1'),
+#                                             LHK=LHK,
+#                                             is_divided=is_divided,
+#                                             product_specification_format='Recovery',
+#                                             Lr=Lr, Hr=Hr, k=k, P=P,
+#                                             vessel_material=vessel_material,
+#                                             partial_condenser=partial_condenser,
+#                                             # condenser_thermo = ideal_thermo,
+#                                             # boiler_thermo = ideal_thermo,
+#                                             # thermo=ideal_thermo,
+#                                             )
+#     return new_column
 
-def add_flash_vessel(in_stream,
-                    V, 
-                    ID=None,
-                    P=101325., 
-                    vessel_material='Stainless steel 316',
-                    thermo=None
-                    ):
-    if not thermo:
-        thermo=in_stream.thermo
-    if not ID:
-        ID=f'{in_stream.ID}_Flash'
-    return Flash(ID, ins=in_stream, outs=(f'{ID}_0', f'{ID}_1'), 
-                     V=V, 
-                     P=P,
-                     thermo=thermo)
+# def add_flash_vessel(in_stream,
+#                     V, 
+#                     ID=None,
+#                     P=101325., 
+#                     vessel_material='Stainless steel 316',
+#                     thermo=None
+#                     ):
+#     if not thermo:
+#         thermo=in_stream.thermo
+#     if not ID:
+#         ID=f'{in_stream.ID}_Flash'
+#     return Flash(ID, ins=in_stream, outs=(f'{ID}_0', f'{ID}_1'), 
+#                      V=V, 
+#                      P=P,
+#                      thermo=thermo)
 
 
 def add_node(parent_node, stream, unit_to_add, **kwargs):
@@ -729,7 +729,8 @@ def add_crystallizer_filter_dryer(in_stream, solute, target_recovery=0.99, tau=6
     new_dryer = bst.DrumDryer(IDs[2], ins=(new_filter-0, 'dryer_air_in', natural_gas_drying,),
                          outs=('dry_solids', 'hot_air', 'emissions'),
                          split={solute: 1e-4,
-                                    'Yeast': 0.}
+                                    'Yeast': 0.},
+                         moisture_content=1e-4,
                          )
     try:
         new_dryer.simulate()
@@ -1257,12 +1258,12 @@ def perform_solvent_extraction(stream, solvent_ID, partition_data={}, T=None, P=
                                           price=solvent_price)
         
         new_mixer = bst.Mixer(f'extraction_mixer_{get_valid_ID(solvent_ID)}',
-                              ins=(new_stream, fresh_solvent_stream, ''),
+                              ins=(new_stream, fresh_solvent_stream, '', ''),
                               outs=('to_extraction'))
         @new_mixer.add_specification(run=False)
         def new_mixer_spec():
             solvent_vol_req = 2.5*new_stream.ivol['Water']
-            fresh_solvent_stream.ivol[solvent_ID] = max(0, solvent_vol_req - new_mixer.ins[2].ivol[solvent_ID])
+            fresh_solvent_stream.ivol[solvent_ID] = max(0, solvent_vol_req - new_mixer.ins[2].ivol[solvent_ID] - new_mixer.ins[3].ivol[solvent_ID])
             new_mixer._run()
         new_mixer.simulate() 
         # import pdb
@@ -1278,7 +1279,88 @@ def perform_solvent_extraction(stream, solvent_ID, partition_data={}, T=None, P=
                 break
             except:
                 pass
-        return msms.extract, new_stream, [new_mixer, msms]
+        
+        raffinate = msms.raffinate
+        vle_components_raffinate = [i.ID for i in get_vle_components_sorted(raffinate)]
+        new_distillation_columns = []
+        
+        try:
+            if vle_components_raffinate[0]==solvent_ID:
+                
+                d1 = add_distillation_column(in_stream=raffinate,
+                                                                  LHK=(vle_components_raffinate[0], vle_components_raffinate[1]),
+                                                                  Lr=0.99,
+                                                                  Hr=0.99,
+                                                                  ID=f'raffinate_{get_valid_ID(solvent_ID)}_recovery_distillation_1',
+                                                                  column_type='BinaryDistillation')
+                d1-0-3-new_mixer
+                d1.simulate()
+                new_distillation_columns.append(d1)
+            elif  vle_components_raffinate[-1]==solvent_ID:
+                d1 = add_distillation_column(in_stream=raffinate,
+                                                                  LHK=(vle_components_raffinate[0], vle_components_raffinate[1]),
+                                                                  Lr=0.99,
+                                                                  Hr=0.99,
+                                                                  ID=f'raffinate_{get_valid_ID(solvent_ID)}_recovery_distillation_1',
+                                                                  column_type='BinaryDistillation')
+                
+                d1-1-3-new_mixer
+                d1.simulate()
+                new_distillation_columns.append(d1)
+            else:
+                # # print(vle_components_raffinate)
+                # # raffinate.show(N=100)
+                # # msms.show(N=100)
+                # solvent_index = vle_components_raffinate.index(solvent_ID)
+                # try:
+                #     d1 = add_distillation_column(in_stream=raffinate,
+                #                                                       LHK=(vle_components_raffinate[solvent_index-1], vle_components_raffinate[solvent_index]),
+                #                                                       Lr=0.99,
+                #                                                       Hr=0.99,
+                #                                                       ID=f'raffinate_{get_valid_ID(solvent_ID)}_recovery_distillation_1',
+                #                                                       column_type='BinaryDistillation')
+                #     d1.simulate()
+                #     new_distillation_columns.append(d1)
+                # except:
+                #     d1 = add_distillation_column(in_stream=raffinate,
+                #                                                       LHK=(vle_components_raffinate[solvent_index-2], vle_components_raffinate[solvent_index]),
+                #                                                       Lr=0.99,
+                #                                                       Hr=0.99,
+                #                                                       ID=f'raffinate_{get_valid_ID(solvent_ID)}_recovery_distillation_1',
+                #                                                       column_type='BinaryDistillation')
+                #     d1.simulate()
+                #     new_distillation_columns.append(d1)
+                # # print(d1.LHK, d1.Lr, d1.Hr)
+                # # d1.simulate()
+                # new_distillation_columns.append(d1)
+                
+                # try:
+                #     d2 = add_distillation_column(in_stream=d1.outs[1],
+                #                                                       LHK=(vle_components_raffinate[solvent_index], vle_components_raffinate[solvent_index+1]),
+                #                                                       Lr=0.99,
+                #                                                       Hr=0.99,
+                #                                                       ID=f'raffinate_{get_valid_ID(solvent_ID)}_recovery_distillation_2',
+                #                                                       column_type='BinaryDistillation')
+                #     d2.simulate()
+                #     new_distillation_columns.append(d2)
+                
+                # except:
+                #     d2 = add_distillation_column(in_stream=d1.outs[1],
+                #                                                       LHK=(vle_components_raffinate[solvent_index], vle_components_raffinate[solvent_index+2]),
+                #                                                       Lr=0.99,
+                #                                                       Hr=0.99,
+                #                                                       ID=f'raffinate_{get_valid_ID(solvent_ID)}_recovery_distillation_2',
+                #                                                       column_type='BinaryDistillation')
+                #     d2.simulate()
+                #     new_distillation_columns.append(d2)
+                # d2-0-3-new_mixer
+                pass
+                
+        except:
+            print('\n\nsquawk\n\n')
+            pass
+        new_mixer.simulate()    
+        return msms.extract, new_stream, [new_mixer, msms] + new_distillation_columns, raffinate
     # except:
     #     return None, None, None
     
@@ -1388,7 +1470,7 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
                                           solute_ID=products[0], 
                                           impurity_IDs=[c.ID for c in stream_for_DAG.vle_chemicals if (not c.ID in products and stream_for_DAG.imol[c.ID]>0.)],
                                           T=T,
-                                          plot_Ks=False)
+                                          plot_Ks=True)
             
             # stream.show(N=100)
             # print(products[0], [c.ID for c in stream_for_DAG.vle_chemicals if ((not c.ID in products) and (stream_for_DAG.imol[c.ID]>0.))])
@@ -1420,7 +1502,7 @@ def get_separation_units(stream, products=[], plot_graph=False, print_progress=F
                             phi = 0.5)
                 # print(temp_K, K)
                 
-                stream_for_DAG, new_stream, msms = perform_solvent_extraction(stream, 
+                stream_for_DAG, new_stream, msms, raffinate = perform_solvent_extraction(stream, 
                                                                               solute_ID, 
                                                                               partition_data,
                                                                               solvent_prices=solvent_prices,
