@@ -730,7 +730,7 @@ def add_crystallizer_filter_dryer(in_stream, solute, target_recovery=0.99, tau=6
                          outs=('dry_solids', 'hot_air', 'emissions'),
                          split={solute: 1e-4,
                                     'Yeast': 0.},
-                         moisture_content=1e-4,
+                         # moisture_content=5e-4,
                          )
     try:
         new_dryer.simulate()
