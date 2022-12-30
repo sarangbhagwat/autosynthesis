@@ -50,9 +50,7 @@ solvent_IDs = [
                 # 'Water',
                 'Benzene',
                 '143-28-2', # CAS number for Oleyl alcohol
-                'Tetrahydrofuran',
-                'EthylAcetate',
-                
+                'Tetrahydrofuran'
                 ]
 
 
@@ -564,6 +562,7 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
                      T=None, # Temperature (K) at which you wish to run the solvents barrage; temperature (K) of "stream" by default
                      P=None,
                      solvent_to_water_mol_ratio_range=(0.25, 4.),
+                     disregard_solvent_water_azeotrope=True,
                      stream_modifiers='baseline_stream', # String: 'baseline_stream' to analyze the "stream" passed in arguments; 'impurity_free_stream' to remove the impurities listed in impurity_IDs before performing analyses; 'solute_in_pure_water' to analyze simply for the solute in pure water)
                      plot_Ks=False,
                      save_excel=False,
@@ -595,7 +594,7 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
     # print([results[rl[8]][i] for i in range(len(results[rl[0]]))])
     candidate_solvent_indices = [i for i in range(len(results[rl[0]])) 
                                       if (not results[rl[8]][i]) 
-                                      # and (not results[rl[7]][i])
+                                      and ((not results[rl[7]][i]) or disregard_solvent_water_azeotrope)
                                       # and results[rl[3]][i] < 1.
                                       # and results[rl[4]][i] < 1.
                                       
