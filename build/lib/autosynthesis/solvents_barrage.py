@@ -432,13 +432,24 @@ def run_solvents_barrage(stream, # Stream from which you wish to extract the sol
     # %% Unit initialization and tests
     solvent_to_run = results_list[0][0]
     set_solvent(solvent_to_run)
-    partition_data = dict(IDs=(solute_ID, 'Water', solvent_to_run,
-                                impurity_IDs[0], impurity_IDs[1],), 
-                K=np.array([1./results_dict[solvent_to_run][1],
-                            1/results_dict[solvent_to_run][2],
-                            results_dict[solvent_to_run][3],
-                           results_dict[solvent_to_run][5],
-                           results_dict[solvent_to_run][6]]),
+    temp_IDs = [solute_ID, 'Water', solvent_to_run,
+                                impurity_IDs[0], impurity_IDs[1],]
+    IDs = []
+    excluded_indices = []
+    for i in range(len(temp_IDs)):
+        if not temp_IDs[i] in IDs:
+            IDs.append(temp_IDs[i])
+            excluded_indices.append(i)
+    temp_K = np.array([1./results_dict[solvent_to_run][1],
+                1/results_dict[solvent_to_run][2],
+                results_dict[solvent_to_run][3],
+               results_dict[solvent_to_run][5],
+               results_dict[solvent_to_run][6]])
+    
+    K=[temp_K[j] for j in range(len(temp_K)) if not j in excluded_indices]
+    
+    partition_data = dict(IDs=IDs, 
+                K=K,
                 phi = 0.5)
     
     MS = bst.units.MultiStageMixerSettlers('MS', ins = (process_stream, solvent_stream),
@@ -551,6 +562,7 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
                      T=None, # Temperature (K) at which you wish to run the solvents barrage; temperature (K) of "stream" by default
                      P=None,
                      solvent_to_water_mol_ratio_range=(0.25, 4.),
+                     disregard_solvent_water_azeotrope=True,
                      stream_modifiers='baseline_stream', # String: 'baseline_stream' to analyze the "stream" passed in arguments; 'impurity_free_stream' to remove the impurities listed in impurity_IDs before performing analyses; 'solute_in_pure_water' to analyze simply for the solute in pure water)
                      plot_Ks=False,
                      save_excel=False,
@@ -582,6 +594,7 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
     # print([results[rl[8]][i] for i in range(len(results[rl[0]]))])
     candidate_solvent_indices = [i for i in range(len(results[rl[0]])) 
                                       if (not results[rl[8]][i]) 
+                                      and ((not results[rl[7]][i]) or disregard_solvent_water_azeotrope)
                                       # and results[rl[3]][i] < 1.
                                       # and results[rl[4]][i] < 1.
                                       
