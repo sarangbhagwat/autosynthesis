@@ -1370,10 +1370,10 @@ def get_separation_units(stream, products=[], try_initial_flash_water=True,
     if all_products_are_less_volatile_than_water:
         stream_for_initial_flash = stream_for_DAG.copy()
         stream_for_initial_flash.ID = stream_for_DAG.ID
-        new_initial_flash_V = 0.4*stream_for_initial_flash.imol['Water']/sum([stream_for_initial_flash.imol[i] for i in vle_components_sorted])
+        new_initial_flash_V = 0.1*stream_for_initial_flash.imol['Water']/sum([stream_for_initial_flash.imol[i] for i in vle_components_sorted])
         new_initial_flash = add_flash_vessel(in_stream=stream_for_initial_flash, V=new_initial_flash_V, P=101325/20.)
         new_initial_flash.simulate()
-        new_initial_flash.show('cwt100')
+        # new_initial_flash.show('cwt100')
         acceptable_product_recovery = True
         for p in products:
             if new_initial_flash.outs[1].imol[p]/new_initial_flash.ins[0].imol[p] < 0.99:
@@ -1382,7 +1382,7 @@ def get_separation_units(stream, products=[], try_initial_flash_water=True,
         add_initial_flash = acceptable_product_recovery
         
     # if the initial flash was successful, add it
-    print('add_flash: ', add_initial_flash, new_initial_flash)
+    # print('add_flash: ', add_initial_flash, new_initial_flash)
     if add_initial_flash:
         new_initial_flash.ins[0] = stream_for_DAG
         stream_for_DAG = new_initial_flash.outs[1]
@@ -1414,7 +1414,7 @@ def get_separation_units(stream, products=[], try_initial_flash_water=True,
         pass
     
     # print('\n\n\nStream for DAG\n')
-    stream_for_DAG.show()
+    # stream_for_DAG.show()
     has_products = False
     for p in products:
         if stream_for_DAG.imol[p]/stream_for_DAG.F_mol >= 0.01 and stream_for_DAG.imol[p]>=10:
