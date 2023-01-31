@@ -1,2 +1,2 @@
-# apd
-The Automated Process Design package.
+# autosynthesis
+The Automated Process Synthesis and Design package.
