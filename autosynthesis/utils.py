@@ -1345,7 +1345,8 @@ def remove_trace_chemicals(stream, trace_massfrac_threshold=0.02):
 
 #%% Entry
 def get_separation_units(stream, products=[], try_initial_flash_water=True, 
-                         assume_ideal_solvent_water_interactions=True,
+                             assume_ideal_solvent_water_interactions=True,
+                             cutoff_zmol_products=0.01,
                              plot_graph=False, print_progress=False, 
                              connect_path_units=True, simulate_again_after_connecting=False,
                              include_infeasible_edges=False, save_DAG=False,
@@ -1365,7 +1366,7 @@ def get_separation_units(stream, products=[], try_initial_flash_water=True,
             all_products_are_less_volatile_than_water = False
             break
     
-    add_initial_flash = True
+    add_initial_flash = False
     new_initial_flash = None
     if all_products_are_less_volatile_than_water:
         stream_for_initial_flash = stream_for_DAG.copy()
@@ -1417,7 +1418,7 @@ def get_separation_units(stream, products=[], try_initial_flash_water=True,
     # stream_for_DAG.show()
     has_products = False
     for p in products:
-        if stream_for_DAG.imol[p]/stream_for_DAG.F_mol >= 0.01 and stream_for_DAG.imol[p]>=10:
+        if stream_for_DAG.imol[p]/stream_for_DAG.F_mol >= cutoff_zmol_products:
             has_products = True
      
 
