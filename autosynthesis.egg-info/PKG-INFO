@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: autosynthesis
-Version: 0.0.15
+Version: 0.0.16
 Summary: A toolkit for automated synthesis of biorefinery processes including pretreatment, conversion, separation, and upgrading.
 Home-page: https://github.com/sarangbhagwat/autosynthesis
 Author: Sarang S. Bhagwat

@@ -631,7 +631,7 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
        results.lookup([solvent], [f'K_{impurity_IDs[0]}, extract:raffinate [(mol/mol)/(mol/mol)]'])[0],
        results.lookup([solvent], [f'K_{impurity_IDs[1]}, extract:raffinate [(mol/mol)/(mol/mol)]'])[0],
        results.lookup([solvent], ['K_water, extract:raffinate [(mol/mol)/(mol/mol)]'])[0],
-       1./results.lookup([solvent], ['K_solvent, raffinate:extract [(mol/mol)/(mol/mol)]'])[0],
+       1./max(1e-5, results.lookup([solvent], ['K_solvent, raffinate:extract [(mol/mol)/(mol/mol)]'])[0]),
        ]),
    
    'IDs': (solute_ID, 
