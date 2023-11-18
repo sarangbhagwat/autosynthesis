@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# APD: The Automated Process Design package.
+# AutoSynthesis: The Automated Process Synthesis & Design package.
 # Copyright (C) 2020-2023, Sarang Bhagwat <sarangb2@illinois.edu>
 # 
 # This module is under the UIUC open-source license. See 
-# github.com/sarangbhagwat/hxn/blob/master/LICENSE.txt
+# github.com/sarangbhagwat/autosynthesis/blob/main/LICENSE.txt
 # for license details.
 """
 Created on Sat Apr 2 21:25:33 2022
