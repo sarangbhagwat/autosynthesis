@@ -122,8 +122,10 @@ def run_solvents_barrage(stream, # Stream from which you wish to extract the sol
             #     chemical_database(chem.CAS)
             # except:
             if not chem.CAS in [c.CAS for c in test_env_chems]:
-                test_env_chems.append(borrowed_chemicals[chem.ID])
-    
+                try:
+                    test_env_chems.append(borrowed_chemicals[chem.ID])
+                except:
+                    pass
     load_chemicals(borrowed_chemicals_list)
     test_env_chems.compile()
     

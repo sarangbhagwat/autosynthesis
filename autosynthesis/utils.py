@@ -1047,7 +1047,10 @@ def get_cost_sharp_split(edge, map_dict, feed_stream, column_type='ShortcutColum
                     util_cost_tot += u.utility_cost
                 # print(f'\nPSD used: {LHK}; cost={util_cost_tot}')
                 return util_cost_tot, psd_units
-            except(RuntimeError or ValueError or FloatingPointError) as e:
+            
+            # except(RuntimeError or ValueError or FloatingPointError or UnboundLocalError) as e:
+            except:
+                
                 # print((nki, nkj), str(e))
                 try:
                     D = add_distillation_column(D_in_stream,
@@ -1063,7 +1066,10 @@ def get_cost_sharp_split(edge, map_dict, feed_stream, column_type='ShortcutColum
                 # import pdb
                 # pdb.set_trace()
                     D.simulate()
-                except(RuntimeError or ValueError or FloatingPointError) as e:
+                    
+                # except(RuntimeError or ValueError or FloatingPointError or UnboundLocalError) as e:
+                except:
+                    
                     # print((nki, nkj), str(e))
                     return 1e10, D
     except:
@@ -1081,7 +1087,9 @@ def get_cost_sharp_split(edge, map_dict, feed_stream, column_type='ShortcutColum
         # import pdb
         # pdb.set_trace()
             D.simulate()
-        except (RuntimeError or ValueError or FloatingPointError) as e:
+            
+        # except (RuntimeError or ValueError or FloatingPointError or UnboundLocalError) as e:
+        except:
             # print((nki, nkj), str(e))
             return 1e10, D
                 
@@ -1350,7 +1358,9 @@ def get_separation_units(stream, products=[], try_initial_flash_water=True,
                              plot_graph=False, print_progress=False, 
                              connect_path_units=True, simulate_again_after_connecting=False,
                              include_infeasible_edges=False, save_DAG=False,
-                             solvent_prices=solvent_prices):
+                             solvent_prices=solvent_prices,
+                             column_type='ShortcutColumn',
+                             ):
  
     path_units = []
     
@@ -1359,7 +1369,7 @@ def get_separation_units(stream, products=[], try_initial_flash_water=True,
     vle_components_sorted = get_vle_components_sorted(stream_for_DAG, 1e-3)
     vle_components_sorted = [i.ID for i in vle_components_sorted]
     
-    water_index = vle_components_sorted.index('Water')
+    water_index = vle_components_sorted.index('Water') if 'Water' in vle_components_sorted else vle_components_sorted.index('H2O')
     all_products_are_less_volatile_than_water = True
     for p in products:
         if vle_components_sorted.index(p) < water_index:
@@ -1379,7 +1389,7 @@ def get_separation_units(stream, products=[], try_initial_flash_water=True,
         for p in products:
             if new_initial_flash.outs[1].imol[p]/new_initial_flash.ins[0].imol[p] < 0.99:
                 acceptable_product_recovery = False
-                print('\n\n Unacceptable recovery \n\n')
+                print('\n\nUnacceptable recovery \n\n')
         add_initial_flash = acceptable_product_recovery
         
     # if the initial flash was successful, add it
@@ -1428,64 +1438,66 @@ def get_separation_units(stream, products=[], try_initial_flash_water=True,
         if print_progress:
             print('Running solvents barrage ...')
         
-        Ts = list(np.linspace(10+273.15, 90+273.15, 10))
-        Ts.reverse()
-        
-        for T in Ts:
-            candidate_solvents_dict, results_df = get_candidate_solvents_ranked(stream=stream_for_DAG, 
-                                          solute_ID=products[0], 
-                                          impurity_IDs=[c.ID for c in stream_for_DAG.vle_chemicals if (not c.ID in products and stream_for_DAG.imol[c.ID]>0.)],
-                                          T=T,
-                                          plot_Ks=False)
+        try:
+            Ts = list(np.linspace(10+273.15, 90+273.15, 10))
+            Ts.reverse()
             
-            # stream.show(N=100)
-            # print(products[0], [c.ID for c in stream_for_DAG.vle_chemicals if ((not c.ID in products) and (stream_for_DAG.imol[c.ID]>0.))])
-            extract, stream_for_DAG, msms = None, stream_for_DAG, None
-            
-            # print(list(candidate_solvents_dict.keys()))
-            
-            if list(candidate_solvents_dict.keys()): # if a candidate solvent is found
-                if print_progress:
-                    print(f'Performing primary extraction at{T-273.15} degC using solvent: {list(candidate_solvents_dict.keys())[0]} ...')
+            for T in Ts:
+                candidate_solvents_dict, results_df = get_candidate_solvents_ranked(stream=stream_for_DAG, 
+                                              solute_ID=products[0], 
+                                              impurity_IDs=[c.ID for c in stream_for_DAG.vle_chemicals if (not c.ID in products and stream_for_DAG.imol[c.ID]>0.)],
+                                              T=T,
+                                              plot_Ks=False)
                 
-                solvent_ID, temp_partition_data = list(candidate_solvents_dict.keys())[0], list(candidate_solvents_dict.values())[0]
+                # stream.show(N=100)
+                # print(products[0], [c.ID for c in stream_for_DAG.vle_chemicals if ((not c.ID in products) and (stream_for_DAG.imol[c.ID]>0.))])
+                extract, stream_for_DAG, msms = None, stream_for_DAG, None
                 
-                temp_IDs = temp_partition_data['IDs']
-                IDs = []
-                excluded_indices = []
-                for i in range(len(temp_IDs)):
-                    if temp_IDs[i] in IDs:
-                        excluded_indices.append(i)
-                    else:
-                        IDs.append(temp_IDs[i])
-                temp_K = temp_partition_data['K']
-                K=[temp_K[j] for j in range(len(temp_K)) if not j in excluded_indices]
-                for i in range(len(K)):
-                    if K[i]==0. or K[i]==0:
-                        K[i] = 1e-4
+                # print(list(candidate_solvents_dict.keys()))
                 
-                if assume_ideal_solvent_water_interactions:
-                    K[IDs.index('Water')] = 1e-4 # assumed
-                    K[IDs.index(solvent_ID)] = 1/1e-4 # assumed
-                
-                partition_data = {'IDs':IDs, 
-                            'K':np.array(K),
-                            'phi' : 0.5}
-                
-                # print(temp_K, K)
-                
-                stream_for_DAG, new_stream, msms = perform_solvent_extraction(stream_for_DAG, 
-                                                                              solvent_ID, 
-                                                                              partition_data,
-                                                                              solvent_prices=solvent_prices,
-                                                                              T=T)
-                # msms[1].show(N=100)
-                # msms[1].show('cwt100')
-                # print(msms[1].partition_data)
-                # print(msms[1].N_stages)
-                products.append(list(candidate_solvents_dict.keys())[0])
-                break
-            
+                if list(candidate_solvents_dict.keys()): # if a candidate solvent is found
+                    if print_progress:
+                        print(f'Performing primary extraction at{T-273.15} degC using solvent: {list(candidate_solvents_dict.keys())[0]} ...')
+                    
+                    solvent_ID, temp_partition_data = list(candidate_solvents_dict.keys())[0], list(candidate_solvents_dict.values())[0]
+                    
+                    temp_IDs = temp_partition_data['IDs']
+                    IDs = []
+                    excluded_indices = []
+                    for i in range(len(temp_IDs)):
+                        if temp_IDs[i] in IDs:
+                            excluded_indices.append(i)
+                        else:
+                            IDs.append(temp_IDs[i])
+                    temp_K = temp_partition_data['K']
+                    K=[temp_K[j] for j in range(len(temp_K)) if not j in excluded_indices]
+                    for i in range(len(K)):
+                        if K[i]==0. or K[i]==0:
+                            K[i] = 1e-4
+                    
+                    if assume_ideal_solvent_water_interactions:
+                        K[IDs.index('Water')] = 1e-4 # assumed
+                        K[IDs.index(solvent_ID)] = 1/1e-4 # assumed
+                    
+                    partition_data = {'IDs':IDs, 
+                                'K':np.array(K),
+                                'phi' : 0.5}
+                    
+                    # print(temp_K, K)
+                    
+                    stream_for_DAG, new_stream, msms = perform_solvent_extraction(stream_for_DAG, 
+                                                                                  solvent_ID, 
+                                                                                  partition_data,
+                                                                                  solvent_prices=solvent_prices,
+                                                                                  T=T)
+                    # msms[1].show(N=100)
+                    # msms[1].show('cwt100')
+                    # print(msms[1].partition_data)
+                    # print(msms[1].N_stages)
+                    products.append(list(candidate_solvents_dict.keys())[0])
+                    break
+        except:
+            pass
     
         #%% Remove trace chemicals
         
@@ -1502,7 +1514,7 @@ def get_separation_units(stream, products=[], try_initial_flash_water=True,
         if print_progress:
             print('Generating graph ...')
         edges_dict, map_dict, nodes_dict, edges_units_dict, terminal_nodes = generate_DAG_vle_sharp(stream_for_DAG,
-                                                                  column_type='BinaryDistillation',
+                                                                  column_type=column_type,
                                                                   include_infeasible_edges=include_infeasible_edges,
                                                                   products=products)
         
