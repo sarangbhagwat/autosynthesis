@@ -1,5 +1,10 @@
-**/__pycache__
+build
+dist
+autosynthesis.egg-info
+**/results
+**/tmps
 **/.ipynb_checkpoints
+**/__pycache__
 *.pyc
 *.pyo
 .gitignore
@@ -17,13 +22,17 @@ prof
 monkeytype.sqlite3
 *.spyproject*
 
-# Docs #
-########
-# No need to save these files
-docs/tutorial/.ipynb_checkpoints
-docs/.ipynb_checkpoints
-docs/_build/*
-docs/_templates/*
+
+# Data/results #
+################
+# *.xlsx
+*.png
+*.jpeg
+*.svg
+*.npy
+*.csv
+*.jpg
+*.JPG
 
 # Compiled source #
 ###################
@@ -34,7 +43,8 @@ docs/_templates/*
 *.o
 *.so
 *.idea
- # Packages #
+
+# Packages #
 ############
 # it's better to unpack these files and commit the raw source
 # git has its own built in compression methods
@@ -63,4 +73,3 @@ docs/_templates/*
 ehthumbs.db
 Thumbs.db
 surfaces
-CoolPropFluids*.json

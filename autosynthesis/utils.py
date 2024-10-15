@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # AutoSynthesis: The Automated Process Synthesis & Design package.
-# Copyright (C) 2020-2023, Sarang Bhagwat <sarangb2@illinois.edu>
+# Copyright (C) 2022-, Sarang Bhagwat <sarangb2@illinois.edu>
 # 
 # This module is under the UIUC open-source license. See 
 # github.com/sarangbhagwat/autosynthesis/blob/main/LICENSE.txt
@@ -27,7 +27,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from itertools import combinations
 
-__all__ = ('get_separation_units')
+__all__ = ('get_separation_units',)
 #%%
 # from apd.apd_utils_c import mock_pressure_swing_distillation, distill_to_azeotropic_composition
 filterwarnings("ignore")
