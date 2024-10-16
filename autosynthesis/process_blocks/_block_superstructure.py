@@ -13,7 +13,7 @@ Created on Tue Oct 15 00:18:30 2024
 import networkx as nx
 from matplotlib import pyplot as plt
 
-from .feedstock_to_sugars import cane_juicing, corn_dry_grind, cellulosic_pretreatment_saccharification
+from .feedstock_to_sugars import dextrose_monohydrate_receiving, cane_juicing, corn_dry_grind, cellulosic_pretreatment_saccharification
 from .sugar_fermentation import fermentation_HP, fermentation_TAL, fermentation_ethanol
 from .product_separation import HP_solution_separation, TAL_separation, ethanol_separation
 from .product_upgrading import HP_solution_upgrading_acrylic_acid, TAL_upgrading_potassium_sorbate
@@ -23,6 +23,7 @@ __all__ = ('BlockSuperstructure',)
 _all_process_blocks = [
     
     # feedstock_to_sugars
+    dextrose_monohydrate_receiving.DextroseMonohydrateReceiving(),
     cane_juicing.SugarcaneJuicing(),
     corn_dry_grind.CornDryGrind(),
     cellulosic_pretreatment_saccharification.CellulosicPretreatmentSaccharification(),
@@ -44,6 +45,7 @@ _all_process_blocks = [
     ]
 
 _all_exclusively_feedstocks = [
+    'dextrose monohydrate feed',
     'corn',
     'sugarcane',
     'sweet sorghum',
@@ -85,31 +87,35 @@ class BlockSuperstructure():
         for ki, vi in process_blocks_items:
             for kj, vj in process_blocks_items:
                 if not ki==kj:
-                    for ei in vi._out_edges:
-                        for ej in vj._acceptable_in_edges:
-                            if ei==ej: G.add_edge(ki, kj, name=ei)
+                    for ei in vi.out_edges:
+                        for ej in vj.acceptable_in_edges:
+                            if ei==ej: 
+                                G.add_edge(ki, ei) # process block 1 to intermediate/product
+                                G.add_edge(ei, kj) # intermediate/product to process block 2
+                                
         
         for feed in self.exclusively_feedstocks:
             for ki, vi in process_blocks_items:
-                for ei in vi._acceptable_in_edges:
+                for ei in vi.acceptable_in_edges:
                     if feed==ei: G.add_edge(feed, ki, name=ei)
         
         for prod in self.exclusively_products:
             for ki, vi in process_blocks_items:
-                for ei in vi._out_edges:
+                for ei in vi.out_edges:
                     if prod==ei: G.add_edge(ki, prod, name=ei)
                     
         self._graph = G
-        
         return G
     
     def draw_graph(self, draw_edge_labels=False):
         G = self._graph
+        colors = self._get_colors(G)
         pos = nx.spring_layout(G, k=1., iterations=100)
         plt.figure()
         nx.draw(
             G, pos, edge_color='black', width=1, linewidths=1,
-            node_size=500, node_color='pink', alpha=0.9,
+            node_size=500, node_color=colors, alpha=0.9,
+            font_size =7,
             labels={node: node for node in G.nodes()}
         )
         if draw_edge_labels:
@@ -121,24 +127,38 @@ class BlockSuperstructure():
         plt.axis('off')
         plt.show()
     
+    def _get_colors(self, G):
+        process_block_keys = self.process_blocks.keys()
+        exclusively_feedstocks = self.exclusively_feedstocks
+        colors = []
+        for i in G.nodes():
+            if i in process_block_keys: # process block
+                colors.append('#63C6CE')
+            elif i in exclusively_feedstocks: # feedstock
+                colors.append('#7BBD84')
+            else: # intermediates and products
+                colors.append('#F8858A')
+        return colors
+
     def get_all_paths(self, A, B):
         return list(nx.all_simple_paths(self._graph, A, B))
     
     def get_and_draw_all_paths(self, A, B):
         all_paths = self.get_all_paths(A, B)
         G = nx.DiGraph()
-        for p in paths:
-            for i in range(len(p-1)):
+        for p in all_paths:
+            for i in range(len(p)-1):
                 G.add_edge(p[i], p[i+1])
-        G = self._graph
         pos = nx.spring_layout(G, k=1., iterations=100)
+        colors = self._get_colors(G)
         plt.figure()
         nx.draw(
             G, pos, edge_color='black', width=1, linewidths=1,
-            node_size=500, node_color='pink', alpha=0.9,
+            node_size=500, node_color=colors, alpha=0.9,
             labels={node: node for node in G.nodes()}
         )
         plt.axis('off')
         plt.show()
+        return G
         
         

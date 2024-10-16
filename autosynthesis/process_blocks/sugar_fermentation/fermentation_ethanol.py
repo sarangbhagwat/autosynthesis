@@ -22,13 +22,14 @@ class FermentationEthanol(ProcessBlock):
         create_function = create_sucrose_fermentation_system
         N_ins = 1
         N_outs = 3
-        inlets = {primary_inlet_name:0}
+        inlets = {i:0 for i in ['juice: sucrose, glucose, fructose', 
+                                'slurry: glucose, xylose', 
+                                'slurry: glucose',
+                                'dextrose monohydrate']}
         outlets = {'broth: ethanol':0}
         boiler = []
         wastewater = [1]
-        
-        acceptable_in_edges=['juice: sucrose, glucose, fructose', 'slurry: glucose, xylose', 'slurry: glucose']
-        out_edges=['broth: ethanol']
+        ignored_HXN = []
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -36,8 +37,7 @@ class FermentationEthanol(ProcessBlock):
                      outlets=outlets,
                      boiler=boiler,
                      wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
                      N_ins=N_ins,
                      N_outs=N_outs,
-                     acceptable_in_edges=acceptable_in_edges,
-                     out_edges=out_edges,
                      )

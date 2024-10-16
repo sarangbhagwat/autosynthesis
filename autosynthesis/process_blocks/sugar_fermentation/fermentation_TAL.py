@@ -22,13 +22,14 @@ class FermentationTAL(ProcessBlock):
         create_function = create_TAL_fermentation_process
         N_ins = 4
         N_outs = 4
-        inlets = {primary_inlet_name:0}
+        inlets = {i:0 for i in ['juice: sucrose, glucose, fructose', 
+                                'slurry: glucose, xylose', 
+                                'slurry: glucose',
+                                'dextrose monohydrate']}
         outlets = {'broth: TAL':1}
         boiler = []
         wastewater = [0]
-        
-        acceptable_in_edges=['juice: sucrose, glucose, fructose', 'slurry: glucose, xylose', 'slurry: glucose']
-        out_edges=['broth: TAL']
+        ignored_HXN = []
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -36,8 +37,7 @@ class FermentationTAL(ProcessBlock):
                      outlets=outlets,
                      boiler=boiler,
                      wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
                      N_ins=N_ins,
                      N_outs=N_outs,
-                     acceptable_in_edges=acceptable_in_edges,
-                     out_edges=out_edges,
                      )

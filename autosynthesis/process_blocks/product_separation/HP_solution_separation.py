@@ -22,13 +22,11 @@ class HPSolutionSeparation(ProcessBlock):
         create_function = create_HP_separation_improved_process
         N_ins = 6
         N_outs = 4
-        inlets = {primary_inlet_name:0}
+        inlets = {'broth: 3-HP':0}
         outlets = {'3-HP solution':0}
         boiler = [1]
         wastewater = [3, 4, 5, 6]
-        
-        acceptable_in_edges=['broth: 3-HP']
-        out_edges=['3-HP solution']
+        ignored_HXN = []
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -36,8 +34,7 @@ class HPSolutionSeparation(ProcessBlock):
                      outlets=outlets,
                      boiler=boiler,
                      wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
                      N_ins=N_ins,
                      N_outs=N_outs,
-                     acceptable_in_edges=acceptable_in_edges,
-                     out_edges=out_edges,
                      )

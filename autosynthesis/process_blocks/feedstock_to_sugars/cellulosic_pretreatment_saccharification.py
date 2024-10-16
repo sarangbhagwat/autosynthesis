@@ -25,13 +25,11 @@ class CellulosicPretreatmentSaccharification(ProcessBlock):
         create_function = get_cornstover_pretreatment_saccharification
         N_ins = 9
         N_outs = 2
-        inlets = {primary_inlet_name:1}
+        inlets = {i: 0 for i in ['corn stover', 'miscanthus', 'switchgrass', 'wheat straw']}
         outlets = {'slurry: glucose, xylose':1}
         boiler = []
         wastewater = [0]
-        
-        acceptable_in_edges=['corn stover', 'miscanthus', 'switchgrass', 'wheat straw']
-        out_edges=['slurry: glucose, xylose']
+        ignored_HXN = []
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -39,10 +37,9 @@ class CellulosicPretreatmentSaccharification(ProcessBlock):
                      outlets=outlets,
                      boiler=boiler,
                      wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
                      N_ins=N_ins,
                      N_outs=N_outs,
-                     acceptable_in_edges=acceptable_in_edges,
-                     out_edges=out_edges,
                      )
 
 

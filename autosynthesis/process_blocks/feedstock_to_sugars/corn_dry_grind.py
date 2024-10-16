@@ -24,13 +24,11 @@ class CornDryGrind(ProcessBlock):
         create_function = get_corn_system_upto_slurry
         N_ins = 7
         N_outs = 3
-        inlets = {primary_inlet_name:6}
+        inlets = {'corn':6}
         outlets = {'slurry: glucose':1}
         boiler = [0]
         wastewater = [2]
-        
-        acceptable_in_edges=['corn']
-        out_edges=['slurry: glucose']
+        ignored_HXN = []
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -38,10 +36,9 @@ class CornDryGrind(ProcessBlock):
                      outlets=outlets,
                      boiler=boiler,
                      wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
                      N_ins=N_ins,
                      N_outs=N_outs,
-                     acceptable_in_edges=acceptable_in_edges,
-                     out_edges=out_edges,
                      )
 
 

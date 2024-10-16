@@ -22,13 +22,11 @@ class TALSeparation(ProcessBlock):
         create_function = create_TAL_separation_solubility_exploit_process
         N_ins = 4
         N_outs = 6
-        inlets = {primary_inlet_name:1}
+        inlets = {'broth: TAL':0}
         outlets = {'TAL':4}
         boiler = [1]
         wastewater = [2, 3, 5]
-        
-        acceptable_in_edges=['broth: TAL']
-        out_edges=['TAL']
+        ignored_HXN = []
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -36,8 +34,7 @@ class TALSeparation(ProcessBlock):
                      outlets=outlets,
                      boiler=boiler,
                      wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
                      N_ins=N_ins,
                      N_outs=N_outs,
-                     acceptable_in_edges=acceptable_in_edges,
-                     out_edges=out_edges,
                      )

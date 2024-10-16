@@ -22,13 +22,11 @@ class HPSolutionUpgradingAcrylicAcid(ProcessBlock):
         create_function = create_HP_to_acrylic_acid_upgrading_process
         N_ins = 4
         N_outs = 6
-        inlets = {primary_inlet_name:0}
+        inlets = {'3-HP solution':0}
         outlets = {'glacial acrylic acid':0}
         boiler = []
         wastewater = [2]
-        
-        acceptable_in_edges=['3-HP solution']
-        out_edges=['glacial acrylic acid']
+        ignored_HXN = []
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -36,8 +34,7 @@ class HPSolutionUpgradingAcrylicAcid(ProcessBlock):
                      outlets=outlets,
                      boiler=boiler,
                      wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
                      N_ins=N_ins,
                      N_outs=N_outs,
-                     acceptable_in_edges=acceptable_in_edges,
-                     out_edges=out_edges,
                      )

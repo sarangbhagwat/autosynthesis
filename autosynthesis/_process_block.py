@@ -21,10 +21,9 @@ class ProcessBlock():
                  outlets={},
                  boiler=[],
                  wastewater=[],
+                 ignored_HXN=[],
                  N_ins=None,
                  N_outs=None,
-                 acceptable_in_edges=[],
-                 out_edges=[],
                  ):
         self.ID = ID
         self.create_function = create_function
@@ -34,10 +33,9 @@ class ProcessBlock():
         self.outlets = outlets
         self.boiler = boiler
         self.wastewater = wastewater
+        self.ignored_HXN = ignored_HXN
         self.flowsheet = None
         self.system = None
-        self._acceptable_in_edges = acceptable_in_edges
-        self._out_edges = out_edges
         
     def create(self, inlets={}, outlets={}):
         # ins = [''] * self.N_ins
@@ -60,8 +58,20 @@ class ProcessBlock():
         self.outlet(name_outlet)-receiving_process_block.inlets[name_inlet]-receiving_process_block.inlet(name_inlet).sink
     
     def make_all_possible_connections(self, receiving_process_block):
+        # out_edges = self._out_edges
+        # in_edges = receiving_process_block._acceptable_in_edges
+        # for name in set(out_edges).intersection(set(in_edges)):
+        #    self.connect(name, receiving_process_block, name) 
+
         outlets = self.outlets
         inlets = receiving_process_block.inlets
         for name in set(outlets.keys()).intersection(set(inlets.keys())):
-           self.connect(name, receiving_process_block, name) 
-
+            self.connect(name, receiving_process_block, name) 
+    
+    @property
+    def out_edges(self):
+        return list(self.outlets.keys())
+    
+    @property
+    def acceptable_in_edges(self):
+        return list(self.inlets.keys())

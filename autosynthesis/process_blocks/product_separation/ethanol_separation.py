@@ -22,13 +22,11 @@ class EthanolSeparation(ProcessBlock):
         create_function = create_ethanol_purification_system
         N_ins = 2
         N_outs = 3
-        inlets = {primary_inlet_name:0}
+        inlets = {'broth: ethanol':0}
         outlets = {'ethanol':0}
         boiler = []
         wastewater = [1]
-        
-        acceptable_in_edges=['broth: ethanol']
-        out_edges=['ethanol']
+        ignored_HXN = []
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -36,8 +34,7 @@ class EthanolSeparation(ProcessBlock):
                      outlets=outlets,
                      boiler=boiler,
                      wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
                      N_ins=N_ins,
                      N_outs=N_outs,
-                     acceptable_in_edges=acceptable_in_edges,
-                     out_edges=out_edges,
                      )

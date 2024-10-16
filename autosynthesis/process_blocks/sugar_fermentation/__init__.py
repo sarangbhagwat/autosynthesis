@@ -15,7 +15,7 @@ from . import fermentation_ethanol
 
 
 __all__ = (
-    fermentation_HP.__all__,\
-    fermentation_TAL.__all__,
-    fermentation_ethanol.__all__,
+    *fermentation_HP.__all__,\
+    *fermentation_TAL.__all__,
+    *fermentation_ethanol.__all__,
 )

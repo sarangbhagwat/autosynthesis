@@ -23,13 +23,11 @@ class TALUpgradingIPAPotassiumSorbate(ProcessBlock):
         create_function = create_TAL_to_sorbic_acid_upgrading_process
         N_ins = 7
         N_outs = 8
-        inlets = {primary_inlet_name:0}
+        inlets = {i:0 for i in ['TAL', 'TAL solution']}
         outlets = {'potassium sorbate':0}
         boiler = [1]
         wastewater = [6, 7]
-        
-        acceptable_in_edges=['TAL', 'TAL solution']
-        out_edges=['potassium sorbate']
+        ignored_HXN = ['u.R401', 'u.R402', 'u.R403']
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -37,10 +35,9 @@ class TALUpgradingIPAPotassiumSorbate(ProcessBlock):
                      outlets=outlets,
                      boiler=boiler,
                      wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
                      N_ins=N_ins,
                      N_outs=N_outs,
-                     acceptable_in_edges=acceptable_in_edges,
-                     out_edges=out_edges,
                      )
 
 
@@ -50,13 +47,11 @@ class TALUpgradingTHFEthanolPotassiumSorbate(ProcessBlock):
         create_function = create_TAL_to_sorbic_acid_upgrading_process_THF_Ethanol
         N_ins = 8
         N_outs = 10
-        inlets = {primary_inlet_name:0}
+        inlets = {i:0 for i in ['TAL', 'TAL solution']}
         outlets = {'potassium sorbate':0}
         boiler = [1]
         wastewater = [7, 8, 9]
-        
-        acceptable_in_edges=['TAL', 'TAL solution']
-        out_edges=['potassium sorbate']
+        ignored_HXN = ['u.R401', 'u.R402', 'u.R403']
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -64,8 +59,7 @@ class TALUpgradingTHFEthanolPotassiumSorbate(ProcessBlock):
                      outlets=outlets,
                      boiler=boiler,
                      wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
                      N_ins=N_ins,
                      N_outs=N_outs,
-                     acceptable_in_edges=acceptable_in_edges,
-                     out_edges=out_edges,
                      )
