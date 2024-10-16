@@ -25,7 +25,7 @@ class FermentationEthanol(ProcessBlock):
         inlets = {i:0 for i in ['juice: sucrose, glucose, fructose', 
                                 'slurry: glucose, xylose', 
                                 'slurry: glucose',
-                                'dextrose monohydrate']}
+                                'sugars: dextrose monohydrate']}
         outlets = {'broth: ethanol':0}
         boiler = []
         wastewater = [1]

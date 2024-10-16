@@ -22,8 +22,8 @@ class DextroseMonohydrateReceiving(ProcessBlock):
         create_function = create_dextrose_monohydrate_receiving_system
         N_ins = 7
         N_outs = 3
-        inlets = {'dextrose monohydrate feed':0}
-        outlets = {'dextrose monohydrate':0}
+        inlets = {'dextrose monohydrate':0}
+        outlets = {'sugars: dextrose monohydrate':0}
         boiler = []
         wastewater = []
         ignored_HXN = []

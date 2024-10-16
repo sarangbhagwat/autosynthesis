@@ -25,7 +25,7 @@ class FermentationHP(ProcessBlock):
         inlets = {i:0 for i in ['juice: sucrose, glucose, fructose', 
                                 'slurry: glucose, xylose',
                                 'slurry: glucose',
-                                'dextrose monohydrate']}
+                                'sugars: dextrose monohydrate']}
         outlets = {'broth: 3-HP':0}
         boiler = []
         wastewater = [2, 3]

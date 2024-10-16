@@ -45,7 +45,7 @@ _all_process_blocks = [
     ]
 
 _all_exclusively_feedstocks = [
-    'dextrose monohydrate feed',
+    'dextrose monohydrate',
     'corn',
     'sugarcane',
     'sweet sorghum',

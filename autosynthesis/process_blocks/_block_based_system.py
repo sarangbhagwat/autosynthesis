@@ -23,14 +23,59 @@ tmo_settings = tmo.settings
 set_thermo = tmo_settings.set_thermo
 Chemicals = tmo.Chemicals
 
+#%% Consolidating multiple Chemicals/CompiledChemicals objects into a single CompiledChemicls object
+
+def _get_consolidated_chemicals(list_of_compiled_chemicals):
+    chems_brs_compiled = list_of_compiled_chemicals
+    chems_brs = [Chemicals(cbr) for cbr in chems_brs_compiled]
+
+
+    chems_flattened = Chemicals(chems_brs[0])
+    chems_flattened.extend([i for i in chems_brs_compiled[0] if i not in chems_flattened])
+
+    for i in range(1, len(chems_brs)):
+        cbr = chems_brs[i]
+        cbrc = chems_brs_compiled[i]
+        # cbr.extend([i for i in cbrc if i not in cbr]) # add missing chemicals
+        # print(chems_flattened, [i for i in cbrc if i not in chems_flattened])
+        # chems_flattened.extend([i for i in cbrc if i not in chems_flattened])
+        
+        for i in cbrc:
+            if i not in chems_flattened:
+                append=True
+                for j in chems_flattened:
+                    if i.ID.lower() in [c.lower() for c in j.synonyms]:
+                        append=False
+                        break
+                if append:
+                    try:
+                        chems_flattened.append(i)
+                    except:
+                        pass
+                    
+
+    chems_flattened.compile()
+
+    # chems_flattened.set_alias('DiammoniumSulfate', '(NH4)2SO4')
+    # chems_flattened.set_alias('DiammoniumSulfate', 'AmmoniumSulfate')
+
+    for i in list(chems_brs_compiled[0].chemical_groups):
+        chems_flattened.define_group(i, [c.ID for c in chems_brs_compiled[0].__dict__[i]])
+    
+    return chems_flattened
+
+chemicals_default = _get_consolidated_chemicals([HP_chemicals, TAL_chemicals])
+
+#%% Generating a system by process block-based synthesis
+
 def get_system_block_based(feedstock, product, 
                            block_superstructure=BlockSuperstructure(), 
                            choice=None, 
-                           chemicals=None,
+                           chemicals=chemicals_default,
                            draw=True):
     
-    if not chemicals:
-        chemicals = _get_consolidated_chemicals([HP_chemicals, TAL_chemicals])
+    # if not chemicals:
+    #     chemicals = chems
     set_thermo(chemicals)
     
     u = main_flowsheet.unit
@@ -63,38 +108,20 @@ def get_system_block_based(feedstock, product,
         if p in process_block_keys: 
             all_blocks.append(process_blocks[p])
     
-    #%% Initialize and connect process blocks
+    # Initialize and connect process blocks
     for b in all_blocks: b.create()
-    
-    # Try until all necessary chemicals are included
-    # blocks_creation_successful = False
-    # while not blocks_creation_successful:
-    #     try:
-    #         for b in all_blocks: b.create()
-    #         blocks_creation_successful = True
-    #     except UndefinedChemicalAlias as e:
-    #         str_e = str(e)
-    #         # if "UndefinedChemicalAlias: " in str_e:
-    #             # missing_chemical = str_e.replace("UndefinedChemicalAlias: ", "").replace("'", "")
-    #         missing_chemical = str_e.replace("'", "")
-    #         print(missing_chemical)
-    #         # chemicals.append(missing_chemical)
-    #         set_thermo(list(tmo_settings.chemicals) + [missing_chemical])
-    #         # BSS = BlockSuperstructure()
-    #         # else:
-    #             # raise(e)
                 
     for i in range(len(all_blocks)-1):
         all_blocks[i].make_all_possible_connections(all_blocks[i+1])
     
-    #%% Initialize and simulate no-facilities system
+    # Initialize and simulate no-facilities system
     units = []
     for i in all_blocks: units+= list(i.system.units)
         
     no_facilities_sys = System.from_units('no_facilities_sys', units)
     no_facilities_sys.simulate(update_configuration=True)
     
-    #%% SystemFactory to initialize and connect facilities
+    # SystemFactory to initialize and connect facilities
     
     @SystemFactory(ID = 'facilities_only_sys')
     def create_facilities_only_sys(ins, outs, wastewater_streams=[], boiler_streams=[], ignored_HXN_units=[]):
@@ -161,8 +188,8 @@ def get_system_block_based(feedstock, product,
             HXN.heat_utilities = []
             HXN._installed_cost = 0.
     
-    #%% Get all streams to be diverted to wastewater treatment and boiler,
-    #   and all units to be ignored in HXN synthesis
+    # Get all streams to be diverted to wastewater treatment and boiler,
+    # and all units to be ignored in HXN synthesis
     
     wastewater_streams = []
     boiler_streams = []
@@ -175,54 +202,16 @@ def get_system_block_based(feedstock, product,
             namespace_dict.update({'j':j})
             exec('ignored_HXN_units.append(' + j + ')', namespace_dict)
         
-    #%% Create facilities-only system
+    # Create facilities-only system
     facilities_only_sys = create_facilities_only_sys(wastewater_streams=wastewater_streams,
                                                      boiler_streams=boiler_streams, 
                                                      ignored_HXN_units=ignored_HXN_units)
     
-    #%% Create full system
+    # Create full system
     full_sys = System.from_units('full_sys', list(no_facilities_sys.units) + list(facilities_only_sys.units))
     full_sys.simulate(update_configuration=True)
     if draw: full_sys.diagram('cluster')
     
+    for i in range(3): full_sys.simulate()
     return full_sys
 
-
-def _get_consolidated_chemicals(list_of_compiled_chemicals):
-    chems_brs_compiled = list_of_compiled_chemicals
-    chems_brs = [Chemicals(cbr) for cbr in chems_brs_compiled]
-
-
-    chems_flattened = Chemicals(chems_brs[0])
-    chems_flattened.extend([i for i in chems_brs_compiled[0] if i not in chems_flattened])
-
-    for i in range(1, len(chems_brs)):
-        cbr = chems_brs[i]
-        cbrc = chems_brs_compiled[i]
-        # cbr.extend([i for i in cbrc if i not in cbr]) # add missing chemicals
-        # print(chems_flattened, [i for i in cbrc if i not in chems_flattened])
-        # chems_flattened.extend([i for i in cbrc if i not in chems_flattened])
-        
-        for i in cbrc:
-            if i not in chems_flattened:
-                append=True
-                for j in chems_flattened:
-                    if i.ID.lower() in [c.lower() for c in j.synonyms]:
-                        append=False
-                        break
-                if append:
-                    try:
-                        chems_flattened.append(i)
-                    except:
-                        pass
-                    
-
-    chems_flattened.compile()
-
-    # chems_flattened.set_alias('DiammoniumSulfate', '(NH4)2SO4')
-    # chems_flattened.set_alias('DiammoniumSulfate', 'AmmoniumSulfate')
-
-    for i in list(chems_brs_compiled[0].chemical_groups):
-        chems_flattened.define_group(i, [c.ID for c in chems_brs_compiled[0].__dict__[i]])
-    
-    return chems_flattened

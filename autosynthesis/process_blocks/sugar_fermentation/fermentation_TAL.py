@@ -25,7 +25,7 @@ class FermentationTAL(ProcessBlock):
         inlets = {i:0 for i in ['juice: sucrose, glucose, fructose', 
                                 'slurry: glucose, xylose', 
                                 'slurry: glucose',
-                                'dextrose monohydrate']}
+                                'sugars: dextrose monohydrate']}
         outlets = {'broth: TAL':1}
         boiler = []
         wastewater = [0]
