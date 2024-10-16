@@ -15,7 +15,7 @@ from matplotlib import pyplot as plt
 
 from .feedstock_to_sugars import dextrose_monohydrate_receiving, cane_juicing, corn_dry_grind, cellulosic_pretreatment_saccharification
 from .sugar_fermentation import fermentation_HP, fermentation_TAL, fermentation_ethanol
-from .product_separation import HP_solution_separation, TAL_separation, ethanol_separation
+from .product_separation import HP_solution_separation, HP_salt_separation, TAL_separation, ethanol_separation
 from .product_upgrading import HP_solution_upgrading_acrylic_acid, TAL_upgrading_potassium_sorbate
 
 __all__ = ('BlockSuperstructure',)
@@ -35,6 +35,7 @@ _all_process_blocks = [
     
     # product_separation
     HP_solution_separation.HPSolutionSeparation(),
+    HP_salt_separation.HPSaltSeparation(),
     TAL_separation.TALSeparation(),
     ethanol_separation.EthanolSeparation(),
     
@@ -59,6 +60,7 @@ _all_exclusively_products = [
     'glacial acrylic acid',
     'ethanol',
     'potassium sorbate',
+    'sodium 3-hydroxypropionate'
     ]
 
 class BlockSuperstructure():

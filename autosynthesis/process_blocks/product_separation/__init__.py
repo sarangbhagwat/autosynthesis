@@ -10,6 +10,7 @@
 
 from . import ethanol_separation
 from . import HP_solution_separation
+from . import HP_salt_separation
 from . import TAL_separation
 
 
@@ -17,5 +18,6 @@ from . import TAL_separation
 __all__ = (
     *ethanol_separation.__all__,\
     *HP_solution_separation.__all__,
+    *HP_salt_separation.__all__,
     *TAL_separation.__all__,
 )
