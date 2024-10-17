@@ -13,7 +13,7 @@ Created on Tue Oct 15 00:18:30 2024
 import networkx as nx
 from matplotlib import pyplot as plt
 
-from .feedstock_to_sugars import dextrose_monohydrate_receiving, cane_juicing, corn_dry_grind, cellulosic_pretreatment_saccharification
+from .feedstock_to_sugars import dextrose_monohydrate_receiving, cane_juicing, corn_dry_grind, cellulosic_pretreatment, cellulosic_saccharification
 from .sugar_fermentation import fermentation_HP, fermentation_TAL, fermentation_ethanol
 from .product_separation import HP_solution_separation, HP_salt_separation, TAL_separation, ethanol_separation
 from .product_upgrading import HP_solution_upgrading_acrylic_acid, TAL_upgrading_potassium_sorbate
@@ -26,7 +26,8 @@ _all_process_blocks = [
     dextrose_monohydrate_receiving.DextroseMonohydrateReceiving(),
     cane_juicing.SugarcaneJuicing(),
     corn_dry_grind.CornDryGrind(),
-    cellulosic_pretreatment_saccharification.CellulosicPretreatmentSaccharification(),
+    cellulosic_pretreatment.CellulosicDiluteAcidPretreatment(),
+    cellulosic_saccharification.CellulosicEnzymaticSaccharification(),
     
     # sugar_fermentation
     fermentation_HP.FermentationHP(),

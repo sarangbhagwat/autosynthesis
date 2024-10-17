@@ -10,7 +10,8 @@
 
 from . import cane_juicing
 from . import corn_dry_grind
-from . import cellulosic_pretreatment_saccharification
+from . import cellulosic_pretreatment
+from . import cellulosic_saccharification
 from . import dextrose_monohydrate_receiving
 
 
@@ -18,6 +19,7 @@ from . import dextrose_monohydrate_receiving
 __all__ = (
     *cane_juicing.__all__,\
     *corn_dry_grind.__all__,
-    *cellulosic_pretreatment_saccharification.__all__,
+    *cellulosic_pretreatment.__all__,
+    *cellulosic_saccharification.__all__,
     *dextrose_monohydrate_receiving.__all__,
 )
