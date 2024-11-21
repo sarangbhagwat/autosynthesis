@@ -9,7 +9,7 @@ __all__ = ('feedstocks', 'products',
            'model_static_queries', 'model_static_changes', 
            'model_dynamic_queries', 'model_dynamic_changes')
 
-
+#%% initial
 feedstocks = [
     'dextrose monohydrate',
     'corn',
@@ -30,6 +30,7 @@ products = [
     'ethanol',
     ]
 
+#%% static interactions
 model_static_queries = [ # queries common to any system, or for which the dynamic aspect can be handled in AutoSynthesis
     # TEA
     'minimum product selling price',
@@ -62,14 +63,52 @@ model_static_changes = [
     'production capacity',
     ]
 
-model_dynamic_queries = [
-    # unit-specific results
-    # raw material-specific results
+#%% dynamic interactions
+# note these will be dynamically generated for each new system; below items 
+# are examples only
+
+
+model_unit_name_examples = [
+    'D401',
+    'R302',
+    'C601',
+    'D301',
+    'R301',
+    'fermentation reactor',
     ]
 
-model_dynamic_changes = [
-    # unit-specific design parameters
-    'prices',
-    'impact characterization factors',
+model_unit_attribute_examples = [
+    'material balance',
+    'installed costs',
+    'power utility',
+    'heat utilities',
+    'CO2 sparging rate',
+    'all reactions',
+    'glucose to 3-HP reaction',
+    'glucose to acetic acid reaction',
+    'light key recovery',
+    'heavy key recovery',
     ]
 
+model_stream_name_examples = [
+    'feedstock',
+    'acrylic acid',
+    'sulfuric acid for reacidulation',
+    'lime for neutralization',]
+
+model_stream_attribute_examples = [
+    'price',
+    'cost',
+    'mass flow',
+    'molar flow',
+    'volumetric flow',
+    ]
+
+model_dynamic_queries = []
+import itertools
+for i in itertools.product(model_unit_name_examples, model_unit_attribute_examples):
+    model_dynamic_queries.append(i[0] + ' - ' + i[1])
+for i in itertools.product(model_stream_name_examples, model_stream_attribute_examples):
+    model_dynamic_queries.append(i[0] + ' - ' + i[1])
+
+model_dynamic_changes = []

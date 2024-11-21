@@ -301,7 +301,7 @@ def get_dGmix(stream, aco=None):
     stream_F_mol = stream.F_mol
     x = stream.mol[:]/stream.F_mol
     # print(x)
-    if not aco:
+    if aco is None:
         aco = DAC(vlle_chemicals)
     ac = aco.activity_coefficients(x, stream.T)
     activities = np_multiply_elementwise(x, ac)
@@ -318,6 +318,13 @@ def get_dGsep(feed_streams_set, product_streams_set):
     dG_mix_product = sum([get_dGmix(ps) for ps in product_streams_set])
     
     return dG_mix_product - dG_mix_feed
+
+def get_dGsep_ideal(feed_streams_set, product_streams_set):
+    dG_mix_feed = sum([get_dGmix_ideal(fs) for fs in feed_streams_set])
+    dG_mix_product = sum([get_dGmix_ideal(ps) for ps in product_streams_set])
+    
+    return dG_mix_product - dG_mix_feed
+
     #kJ/h
 
 def get_E_volatility_sep(feed_streams_set, product_streams_set,
