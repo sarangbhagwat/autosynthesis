@@ -2,10 +2,14 @@ LICENSE
 README.md
 setup.py
 autosynthesis/__init__.py
+autosynthesis/_process_block.py
 autosynthesis/solvents_barrage.py
 autosynthesis/solvents_barrage_example.py
+autosynthesis/stream_tier_based_algorithm.py
+autosynthesis/temp_synthesis_module_succinic_ethanol.py
 autosynthesis/units.py
 autosynthesis/utils.py
+autosynthesis/utils_hyperstructure.py
 autosynthesis/wastewater_utils.py
 autosynthesis.egg-info/PKG-INFO
 autosynthesis.egg-info/SOURCES.txt
