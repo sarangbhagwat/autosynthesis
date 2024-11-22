@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: autosynthesis
-Version: 0.0.18
+Version: 0.0.21
 Summary: A toolkit for automated synthesis of biorefinery processes including pretreatment, conversion, separation, and upgrading.
 Home-page: https://github.com/sarangbhagwat/autosynthesis
 Author: Sarang S. Bhagwat
@@ -12,11 +12,5 @@ Classifier: License :: OSI Approved :: University of Illinois/NCSA Open Source L
 Classifier: Operating System :: Microsoft :: Windows
 Classifier: Programming Language :: Python :: 3.8
 License-File: LICENSE
-Requires-Dist: numpy>=1.21.5
-Requires-Dist: networkx>=2.8.4
-Requires-Dist: matplotlib>=3.5.2
-Requires-Dist: biosteam==2.33.2
-Requires-Dist: thermosteam==0.29.1
-Requires-Dist: flexsolve
-Requires-Dist: pint==0.14
+Requires-Dist: biosteam>=2.33.2
 Requires-Dist: xlsxwriter

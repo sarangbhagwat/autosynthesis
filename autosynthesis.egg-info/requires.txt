@@ -1,8 +1,2 @@
-numpy>=1.21.5
-networkx>=2.8.4
-matplotlib>=3.5.2
-biosteam==2.33.2
-thermosteam==0.29.1
-flexsolve
-pint==0.14
+biosteam>=2.33.2
 xlsxwriter

@@ -10,7 +10,7 @@ from setuptools import setup
 setup(
     name='autosynthesis',
     packages=['autosynthesis'],
-    version='0.0.18',    
+    version='0.0.21',    
     description='A toolkit for automated synthesis of biorefinery processes including pretreatment, conversion, separation, and upgrading.',
     url='https://github.com/sarangbhagwat/autosynthesis',
     author='Sarang S. Bhagwat',
@@ -18,13 +18,7 @@ setup(
     license='MIT',
     # packages=['contourplots'],
     install_requires=[
-                      'numpy>=1.21.5',   
-                      'networkx>=2.8.4',
-                      'matplotlib>=3.5.2',
-                      'biosteam==2.33.2',
-                      'thermosteam==0.29.1',
-                      'flexsolve',
-                      'pint==0.14',
+                      'biosteam>=2.33.2',
                       'xlsxwriter',
                       ],
 
