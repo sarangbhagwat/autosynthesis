@@ -37,7 +37,8 @@ _all_process_blocks = [
     # product_separation
     HP_solution_separation.HPSolutionSeparation(),
     HP_salt_separation.HPSaltSeparation(),
-    TAL_separation.TALSeparation(),
+    TAL_separation.TALHotSeparation(),
+    TAL_separation.TALCooledSeparation(),
     ethanol_separation.EthanolSeparation(),
     
     # product_upgrading

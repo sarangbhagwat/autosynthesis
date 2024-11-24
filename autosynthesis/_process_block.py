@@ -55,8 +55,12 @@ class ProcessBlock():
         return self.system.outs[self.outlets[name]]
     
     def connect(self, name_outlet, receiving_process_block, name_inlet):
-        self.outlet(name_outlet)-receiving_process_block.inlets[name_inlet]-receiving_process_block.inlet(name_inlet).sink
-    
+        # print(self.outlet(name_outlet), receiving_process_block.inlets[name_inlet], receiving_process_block.inlet(name_inlet).sink)
+        # self.outlet(name_outlet)-receiving_process_block.inlets[name_inlet]-receiving_process_block.inlet(name_inlet).sink
+        inlet_stream = receiving_process_block.system.ins[receiving_process_block.inlets[name_inlet]]
+        sink_unit_ins_index = receiving_process_block.inlet(name_inlet).sink.ins.index(inlet_stream)
+        self.outlet(name_outlet)-sink_unit_ins_index-receiving_process_block.inlet(name_inlet).sink
+        
     def make_all_possible_connections(self, receiving_process_block):
         # out_edges = self._out_edges
         # in_edges = receiving_process_block._acceptable_in_edges

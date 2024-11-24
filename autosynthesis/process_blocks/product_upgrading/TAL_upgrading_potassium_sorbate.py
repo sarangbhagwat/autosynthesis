@@ -14,7 +14,7 @@ Created on Mon Oct 14 17:04:04 2024
 from .. import ProcessBlock
 from biorefineries.TAL.process_areas import create_TAL_to_sorbic_acid_upgrading_process, create_TAL_to_sorbic_acid_upgrading_process_THF_Ethanol
 
-__all__ = ('TALUpgradingIPAPotassiumSorbate',)
+__all__ = ('TALUpgradingIPAPotassiumSorbate', 'TALUpgradingTHFEthanolPotassiumSorbate')
 
 
 class TALUpgradingIPAPotassiumSorbate(ProcessBlock):
@@ -23,11 +23,11 @@ class TALUpgradingIPAPotassiumSorbate(ProcessBlock):
         create_function = create_TAL_to_sorbic_acid_upgrading_process
         N_ins = 7
         N_outs = 8
-        inlets = {i:0 for i in ['TAL', 'TAL solution']}
+        inlets = {i:0 for i in ['hot TAL', 'TAL solution', 'TAL']}
         outlets = {'potassium sorbate':0}
         boiler = [1]
         wastewater = [6, 7]
-        ignored_HXN = ['u.R401', 'u.R402', 'u.R403']
+        ignored_HXN = ['R401', 'R402', 'R403']
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
@@ -47,11 +47,11 @@ class TALUpgradingTHFEthanolPotassiumSorbate(ProcessBlock):
         create_function = create_TAL_to_sorbic_acid_upgrading_process_THF_Ethanol
         N_ins = 8
         N_outs = 10
-        inlets = {i:0 for i in ['TAL', 'TAL solution']}
+        inlets = {i:0 for i in ['hot TAL', 'TAL solution', 'TAL']}
         outlets = {'potassium sorbate':0}
         boiler = [1]
         wastewater = [7, 8, 9]
-        ignored_HXN = ['u.R401', 'u.R402', 'u.R403']
+        ignored_HXN = ['R401', 'R402', 'R403']
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 

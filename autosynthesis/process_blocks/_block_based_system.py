@@ -69,24 +69,25 @@ chemicals_default = _get_consolidated_chemicals([HP_chemicals, TAL_chemicals])
 #%% Generating a system by process block-based synthesis
 
 def get_system_block_based(feedstock, product, 
-                           block_superstructure=BlockSuperstructure(), 
+                           block_superstructure=None, 
                            choice=None, 
-                           chemicals=chemicals_default,
+                           chemicals=None,
                            draw=True):
     
+    if block_superstructure is None: block_superstructure = BlockSuperstructure()
+    if chemicals is None: chemicals = chemicals_default
     # if not chemicals:
     #     chemicals = chems
     set_thermo(chemicals)
     
     u = main_flowsheet.unit
-    
     BSS = block_superstructure
     BSS.create_graph()
     if draw: BSS.draw_graph()
     all_paths = BSS.get_all_paths(feedstock, product)
     if draw: BSS.get_and_draw_all_paths(feedstock, product)
     path = None
-        
+    
     if len(all_paths)>1: # more than one possible path
         if choice is None: # if user has not entered a choice of path
             print('\nMultiple paths possible; enter value for "choice" argument from the following integers:\n')
@@ -200,7 +201,10 @@ def get_system_block_based(feedstock, product,
         boiler_streams += [i.system.outs[j] for j in i.boiler]
         for j in i.ignored_HXN:
             namespace_dict.update({'j':j})
-            exec('ignored_HXN_units.append(' + j + ')', namespace_dict)
+            try:
+                exec('ignored_HXN_units.append(u.' + j + ')', namespace_dict)
+            except:
+                breakpoint()
         
     # Create facilities-only system
     facilities_only_sys = create_facilities_only_sys(wastewater_streams=wastewater_streams,

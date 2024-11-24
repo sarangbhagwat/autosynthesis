@@ -12,7 +12,7 @@ Created on Mon Oct 14 15:26:44 2024
 """
 
 from .. import ProcessBlock
-from biosteam import System, Unit, Stream
+from biosteam import System, Unit, Mixer, Stream
 
 __all__ = ('DextroseMonohydrateReceiving',)
 
@@ -49,4 +49,6 @@ def create_dextrose_monohydrate_receiving_system(ID):
     def U101_spec():
         U101.outs[0].copy_like(U101.ins[0])
     
-    return System.from_units(ID, [U101])
+    M201 = Mixer('M201', ins=(U101-0, ''), outs='') # bst.UnitGroup.get_material_cost uses bst.utils.get_inlet_origin; i.e., assumes source unit is a storage unit (i.e., attributes material cost to downstream unit) if len(source.ins) == len(source.outs) == 1 and 'processing' not in source.line.lower()
+    
+    return System.from_units(ID, [U101, M201])
