@@ -130,6 +130,9 @@ class BlockSuperstructure():
             )
         plt.axis('off')
         plt.show()
+        # A = nx.nx_agraph.to_agraph(G,)
+        # A.layout()
+        # A.draw('networkx_graph.png',)
     
     def _get_colors(self, G):
         process_block_keys = self.process_blocks.keys()
@@ -159,7 +162,11 @@ class BlockSuperstructure():
         nx.draw(
             G, pos, edge_color='black', width=1, linewidths=1,
             node_size=500, node_color=colors, alpha=0.9,
-            labels={node: node for node in G.nodes()}
+            labels={node: node for node in G.nodes()},
+            node_shape='s', 
+            # bbox=dict(facecolor="skyblue", 
+            #           edgecolor='black', 
+            #           boxstyle='round,pad=0.2')
         )
         plt.axis('off')
         plt.show()

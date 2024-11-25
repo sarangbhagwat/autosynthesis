@@ -24,7 +24,7 @@ class SugarcaneJuicing(ProcessBlock):
         N_outs = 2
         inlets = {'sugarcane':0, 'sweet sorghum':0}
         outlets = {'juice: sucrose, glucose, fructose':0}
-        boiler = [1]
+        boiler = [1, 2]
         wastewater = []
         ignored_HXN = []
         
