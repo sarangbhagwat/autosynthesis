@@ -20,16 +20,18 @@ class SugarcaneJuicing(ProcessBlock):
     
     def __init__(self, ID='sugarcane_juicing',):
         create_function = create_juicing_system_up_to_clarification
+        base_TEA_year = 2019
         N_ins = 4
         N_outs = 2
         inlets = {'sugarcane':0, 'sweet sorghum':0}
         outlets = {'juice: sucrose, glucose, fructose':0}
-        boiler = [1]
+        boiler = [1, 2]
         wastewater = []
         ignored_HXN = []
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
+                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

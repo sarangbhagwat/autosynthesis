@@ -11,6 +11,7 @@ Created on Tue Oct 15 00:18:30 2024
 @author: sarangbhagwat
 """
 import networkx as nx
+import graphviz as gv
 from matplotlib import pyplot as plt
 
 from .feedstock_to_sugars import dextrose_monohydrate_receiving, cane_juicing, corn_dry_grind, cellulosic_pretreatment, cellulosic_saccharification
@@ -35,9 +36,11 @@ _all_process_blocks = [
     fermentation_ethanol.FermentationEthanol(),
     
     # product_separation
-    HP_solution_separation.HPSolutionSeparation(),
+    HP_solution_separation.HPSolutionSeparationIExCR(),
+    HP_solution_separation.HPSolutionSeparationHexanol(),
     HP_salt_separation.HPSaltSeparation(),
-    TAL_separation.TALSeparation(),
+    TAL_separation.TALHotSeparation(),
+    TAL_separation.TALCooledSeparation(),
     ethanol_separation.EthanolSeparation(),
     
     # product_upgrading
@@ -113,6 +116,10 @@ class BlockSuperstructure():
     def draw_graph(self, draw_edge_labels=False):
         G = self._graph
         colors = self._get_colors(G)
+        # G = nx.relabel_nodes(G, 
+        #                      mapping={i:i.replace(':', '--') for i in list(G.nodes)}, 
+        #                      copy=True)
+        # pos = nx.nx_pydot.pydot_layout(G)
         pos = nx.spring_layout(G, k=1., iterations=100)
         plt.figure()
         nx.draw(
@@ -129,6 +136,18 @@ class BlockSuperstructure():
             )
         plt.axis('off')
         plt.show()
+        
+        # draw using graphviz
+        attrs = {}
+        for i,col in zip(list(G.nodes), colors):
+            attrs[i] = {}
+            attrs[i]['style']='filled'
+            attrs[i]['fillcolor']=col
+        nx.set_node_attributes(G, attrs)
+        
+        A = nx.drawing.nx_agraph.to_agraph(G)
+        A.layout('dot')
+        A.draw('block_superstructure.png')
     
     def _get_colors(self, G):
         process_block_keys = self.process_blocks.keys()
@@ -158,10 +177,27 @@ class BlockSuperstructure():
         nx.draw(
             G, pos, edge_color='black', width=1, linewidths=1,
             node_size=500, node_color=colors, alpha=0.9,
-            labels={node: node for node in G.nodes()}
+            labels={node: node for node in G.nodes()},
+            node_shape='s', 
+            # bbox=dict(facecolor="skyblue", 
+            #           edgecolor='black', 
+            #           boxstyle='round,pad=0.2')
         )
         plt.axis('off')
         plt.show()
+        
+        # draw using graphviz
+        attrs = {}
+        for i,col in zip(list(G.nodes), colors):
+            attrs[i] = {}
+            attrs[i]['style']='filled'
+            attrs[i]['fillcolor']=col
+        nx.set_node_attributes(G, attrs)
+        
+        A = nx.drawing.nx_agraph.to_agraph(G)
+        A.layout('dot')
+        A.draw('all_paths_feed_to_product.png')
+        
         return G
         
         
