@@ -20,6 +20,7 @@ class CellulosicDiluteAcidPretreatment(ProcessBlock):
     
     def __init__(self, ID='cellulosic_dilute_acid_pretreatment'):
         create_function = create_dilute_acid_pretreatment_system
+        base_TEA_year = 2007
         N_ins = 3
         N_outs = 2
         inlets = {i: 0 for i in ['corn stover', 'miscanthus', 'switchgrass', 'wheat straw']}
@@ -30,6 +31,7 @@ class CellulosicDiluteAcidPretreatment(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
+                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

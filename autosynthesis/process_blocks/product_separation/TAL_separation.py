@@ -21,6 +21,7 @@ class TALHotSeparation(ProcessBlock):
     def __init__(self, ID='TAL_hot_separation', primary_inlet_name='broth: TAL'):
         self._primary_inlet_name = primary_inlet_name
         create_function = create_TAL_separation_solubility_exploit_process
+        base_TEA_year = 2019
         N_ins = 4
         N_outs = 6
         inlets = {'broth: TAL':0}
@@ -31,6 +32,7 @@ class TALHotSeparation(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
+                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,
@@ -44,9 +46,10 @@ class TALCooledSeparation(ProcessBlock):
     def __init__(self, ID='TAL_cooled_separation', primary_inlet_name='broth: TAL'):
         self._primary_inlet_name = primary_inlet_name
         create_function = create_TAL_cooled_separation_solubility_exploit_process
+        base_TEA_year = 2019
         N_ins = 6
         N_outs = 9
-        inlets = {'broth: TAL':4}
+        inlets = {'broth: TAL':3}
         outlets = {'TAL':8}
         boiler = [0]
         wastewater = [1, 2, 7]
@@ -54,6 +57,7 @@ class TALCooledSeparation(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
+                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

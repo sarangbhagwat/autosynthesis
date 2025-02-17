@@ -21,6 +21,7 @@ class TALUpgradingIPAPotassiumSorbate(ProcessBlock):
     def __init__(self, ID='TAL_upgrading_IPA_potassium_sorbate', primary_inlet_name='TAL'):
         self._primary_inlet_name = primary_inlet_name
         create_function = create_TAL_to_sorbic_acid_upgrading_process
+        base_TEA_year = 2019
         N_ins = 7
         N_outs = 8
         inlets = {i:0 for i in ['hot TAL', 'TAL solution', 'TAL']}
@@ -28,9 +29,9 @@ class TALUpgradingIPAPotassiumSorbate(ProcessBlock):
         boiler = [1]
         wastewater = [6, 7]
         ignored_HXN = ['R401', 'R402', 'R403']
-        
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
+                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,
@@ -45,6 +46,7 @@ class TALUpgradingTHFEthanolPotassiumSorbate(ProcessBlock):
     def __init__(self, ID='TAL_upgrading_THF_ethanol_potassium_sorbate', primary_inlet_name='TAL'):
         self._primary_inlet_name = primary_inlet_name
         create_function = create_TAL_to_sorbic_acid_upgrading_process_THF_Ethanol
+        base_TEA_year = 2019
         N_ins = 8
         N_outs = 10
         inlets = {i:0 for i in ['hot TAL', 'TAL solution', 'TAL']}
@@ -55,6 +57,7 @@ class TALUpgradingTHFEthanolPotassiumSorbate(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
+                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

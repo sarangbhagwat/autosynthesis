@@ -70,7 +70,8 @@ chemicals_default = _get_consolidated_chemicals([HP_chemicals, TAL_chemicals])
 def create_feed_and_product_storage_units(feeds, products, area=600,
                                  product_storage_tau=24.*7., # default to 1-week product storage
                                  include_empty_feeds=False,
-                                 include_empty_products=False):
+                                 include_empty_products=False,
+                                 wastewater_area=500,):
     units = []
     i = 1
     for feed in feeds:
@@ -113,10 +114,11 @@ def create_feed_and_product_storage_units(feeds, products, area=600,
                 pump_unit.outs[0].price = product.price
                 product.price = 0.
             elif is_liquid(product) and not product.imol['Water']/product.F_mol==1\
-                and not (is_from_unit_in_area(product, 500) or is_from_unit_in_area(product, 700)):
+                and not (is_from_unit_in_area(product, wastewater_area)): # as storage units are created only for no_facilities_sys, this condition is 
+                                                                          # not really necessary (even though storage is created after WWT), might remove later
                 str_num = str(area+i)
                 storage_unit = StorageTank('T'+str_num, ins=product, tau=product_storage_tau, thermo=feed.thermo)
-                pump_unit = Pump('P'+str_num, ins=storage_unit-0, thermo=feed.thermo)
+                pump_unit = Pump('P'+str_num, ins=storage_unit-0, outs='product_'+product.ID, thermo=feed.thermo)
                 units += [storage_unit, pump_unit]
                 pump_unit.outs[0].price = product.price
                 product.price = 0.
@@ -177,7 +179,8 @@ def get_system_block_based(feedstock, product,
                            new_facilities=True,
                            new_storage=True,
                            storage_for_empty_feeds=False,
-                           storage_for_empty_products=False):
+                           storage_for_empty_products=False,
+                           TEA_year=2019):
     
     if block_superstructure is None: block_superstructure = BlockSuperstructure()
     if chemicals is None: chemicals = chemicals_default
@@ -219,11 +222,14 @@ def get_system_block_based(feedstock, product,
                 
     for i in range(len(all_blocks)-1):
         all_blocks[i].make_all_possible_connections(all_blocks[i+1])
-    
-    # Initialize and simulate no-facilities system
+
+    # Initialize and simulate no-facilities system; 
+    # also update TEA year for all blocks
     units = []
-    for i in all_blocks: units+= list(i.system.units)
-        
+    for i in all_blocks: 
+        units+= list(i.system.units)
+        i.TEA_year = TEA_year
+
     no_facilities_sys = System.from_units('no_facilities_sys', units)
     no_facilities_sys.simulate(update_configuration=True)
     

@@ -20,6 +20,7 @@ class DextroseMonohydrateReceiving(ProcessBlock):
     
     def __init__(self, ID='dextrose_monohydrate_receiving',):
         create_function = create_dextrose_monohydrate_receiving_system
+        base_TEA_year = 2019
         N_ins = 7
         N_outs = 3
         inlets = {'dextrose monohydrate':0}
@@ -30,6 +31,7 @@ class DextroseMonohydrateReceiving(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
+                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,
