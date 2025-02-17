@@ -20,7 +20,6 @@ class HPSolutionUpgradingAcrylicAcid(ProcessBlock):
     def __init__(self, ID='HP_solution_upgrading_acrylic_acid', primary_inlet_name='3-HP solution'):
         self._primary_inlet_name = primary_inlet_name
         create_function = create_HP_to_acrylic_acid_upgrading_process
-        base_TEA_year = 2016
         N_ins = 4
         N_outs = 6
         inlets = {'3-HP solution':0}
@@ -31,7 +30,6 @@ class HPSolutionUpgradingAcrylicAcid(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
-                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

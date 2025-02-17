@@ -3,11 +3,14 @@ README.md
 setup.py
 autosynthesis/__init__.py
 autosynthesis/_process_block.py
+autosynthesis/apd_utils_c.py
+autosynthesis/graph_utils.py
 autosynthesis/solvents_barrage.py
 autosynthesis/solvents_barrage_example.py
 autosynthesis/stream_tier_based_algorithm.py
 autosynthesis/temp_synthesis_module_succinic_ethanol.py
 autosynthesis/units.py
+autosynthesis/upcs_tools.py
 autosynthesis/utils.py
 autosynthesis/utils_hyperstructure.py
 autosynthesis/wastewater_utils.py

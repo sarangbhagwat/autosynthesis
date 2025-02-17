@@ -1,6 +1,6 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.2
 Name: autosynthesis
-Version: 0.0.21
+Version: 0.0.22
 Summary: A toolkit for automated synthesis of biorefinery processes including pretreatment, conversion, separation, and upgrading.
 Home-page: https://github.com/sarangbhagwat/autosynthesis
 Author: Sarang S. Bhagwat
@@ -14,3 +14,10 @@ Classifier: Programming Language :: Python :: 3.8
 License-File: LICENSE
 Requires-Dist: biosteam>=2.33.2
 Requires-Dist: xlsxwriter
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: home-page
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: summary

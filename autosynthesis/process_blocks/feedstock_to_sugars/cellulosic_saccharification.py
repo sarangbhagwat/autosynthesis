@@ -23,7 +23,6 @@ class CellulosicEnzymaticSaccharification(ProcessBlock):
     
     def __init__(self, ID='cellulosic_enzymatic_saccharification'):
         create_function = get_cornstover_saccharification_system_full
-        base_TEA_year = 2007
         N_ins = 3
         N_outs = 1
         inlets = {i: 0 for i in ['pretreated cellulosic stream']}
@@ -34,7 +33,6 @@ class CellulosicEnzymaticSaccharification(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
-                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

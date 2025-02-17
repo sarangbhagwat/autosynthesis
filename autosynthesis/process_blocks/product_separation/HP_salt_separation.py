@@ -20,7 +20,6 @@ class HPSaltSeparation(ProcessBlock):
     def __init__(self, ID='HP_salt_separation', primary_inlet_name='broth: 3-HP'):
         self._primary_inlet_name = primary_inlet_name
         create_function = create_HP_separation_improved_process_HP_product
-        base_TEA_year = 2016
         N_ins = 6
         N_outs = 8
         inlets = {'broth: 3-HP':0}
@@ -31,7 +30,6 @@ class HPSaltSeparation(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
-                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

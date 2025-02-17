@@ -20,7 +20,6 @@ class FermentationEthanol(ProcessBlock):
     def __init__(self, ID='fermentation_ethanol', primary_inlet_name='juice: sucrose, glucose, fructose'):
         self._primary_inlet_name = primary_inlet_name
         create_function = create_sucrose_fermentation_system
-        base_TEA_year = 2019
         N_ins = 1
         N_outs = 3
         inlets = {i:0 for i in ['juice: sucrose, glucose, fructose', 
@@ -34,7 +33,6 @@ class FermentationEthanol(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
-                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

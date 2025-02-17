@@ -20,21 +20,19 @@ class FermentationTAL(ProcessBlock):
     def __init__(self, ID='fermentation_TAL', primary_inlet_name='juice: sucrose, glucose, fructose'):
         self._primary_inlet_name = primary_inlet_name
         create_function = create_TAL_fermentation_process
-        base_TEA_year = 2019
         N_ins = 4
-        N_outs = 5
+        N_outs = 4
         inlets = {i:0 for i in ['juice: sucrose, glucose, fructose', 
                                 'slurry: glucose, xylose', 
                                 'slurry: glucose',
                                 'sugars: dextrose monohydrate']}
         outlets = {'broth: TAL':1}
         boiler = []
-        wastewater = [0, 4]
+        wastewater = [0]
         ignored_HXN = []
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
-                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

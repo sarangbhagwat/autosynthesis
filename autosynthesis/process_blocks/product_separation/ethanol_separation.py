@@ -20,7 +20,6 @@ class EthanolSeparation(ProcessBlock):
     def __init__(self, ID='ethanol_separation', primary_inlet_name='broth: ethanol'):
         self._primary_inlet_name = primary_inlet_name
         create_function = create_ethanol_purification_system
-        base_TEA_year = 2019
         N_ins = 2
         N_outs = 3
         inlets = {'broth: ethanol':0}
@@ -31,7 +30,6 @@ class EthanolSeparation(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
-                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

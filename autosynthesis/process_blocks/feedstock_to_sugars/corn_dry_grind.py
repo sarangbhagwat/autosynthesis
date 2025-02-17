@@ -22,7 +22,6 @@ class CornDryGrind(ProcessBlock):
     def __init__(self, ID='corn_dry_grind', primary_inlet_name='corn'):
         self._primary_inlet_name = primary_inlet_name
         create_function = get_corn_system_upto_slurry
-        base_TEA_year = 2018
         N_ins = 7
         N_outs = 3
         inlets = {'corn':6}
@@ -33,7 +32,6 @@ class CornDryGrind(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
-                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

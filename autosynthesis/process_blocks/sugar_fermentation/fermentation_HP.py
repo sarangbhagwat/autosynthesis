@@ -20,7 +20,6 @@ class FermentationHP(ProcessBlock):
     def __init__(self, ID='fermentation_HP', primary_inlet_name='slurry: glucose'):
         self._primary_inlet_name = primary_inlet_name
         create_function = create_HP_fermentation_process
-        base_TEA_year = 2016
         N_ins = 7
         N_outs = 4
         inlets = {i:0 for i in ['juice: sucrose, glucose, fructose', 
@@ -34,7 +33,6 @@ class FermentationHP(ProcessBlock):
         
         ProcessBlock.__init__(self, ID=ID, 
                      create_function=create_function, 
-                     base_TEA_year=base_TEA_year,
                      inlets=inlets, 
                      outlets=outlets,
                      boiler=boiler,

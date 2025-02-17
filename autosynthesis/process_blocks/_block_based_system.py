@@ -12,7 +12,7 @@ Created on Mon Oct 14 17:51:28 2024
 """
 
 import thermosteam as tmo
-from biosteam import System, SystemFactory, Mixer, HeatUtility, StorageTank, Pump, ConveyingBelt, ChilledWaterPackage, HeatExchangerNetwork, create_high_rate_wastewater_treatment_system, main_flowsheet
+from biosteam import System, SystemFactory, Mixer, HeatUtility, ChilledWaterPackage, HeatExchangerNetwork, create_high_rate_wastewater_treatment_system, main_flowsheet
 from biorefineries.cellulosic import create_facilities
 from biorefineries.HP.chemicals_data import HP_chemicals
 from biorefineries.TAL.chemicals_data import TAL_chemicals
@@ -66,136 +66,27 @@ def _get_consolidated_chemicals(list_of_compiled_chemicals):
 
 chemicals_default = _get_consolidated_chemicals([HP_chemicals, TAL_chemicals])
 
-#%% Generating units for storage of feed and product streams
-def create_feed_and_product_storage_units(feeds, products, area=600,
-                                 product_storage_tau=24.*7., # default to 1-week product storage
-                                 include_empty_feeds=False,
-                                 include_empty_products=False,
-                                 wastewater_area=500,):
-    units = []
-    i = 1
-    for feed in feeds:
-        sink = feed.sink
-        sink_index = sink.ins.index(feed)
-        if (not feed.F_mol==0.) or include_empty_feeds:
-            # print(feed.source, feed.ID, feed.sink)
-            if is_solid(feed):
-                str_num = str(area+i)
-                pump_unit = Pump('P'+str_num, ins='', outs='', thermo=feed.thermo)
-                pump_unit-0-sink_index-sink
-                storage_unit = StorageTank('T'+str_num, ins=feed, thermo=feed.thermo)
-                storage_unit-0-0-pump_unit
-                units += [storage_unit, pump_unit]
-                # storage_unit.ins[0].price = feed.price
-                # feed.price = 0.
-            elif is_liquid(feed) and not feed.imol['Water']/feed.F_mol==1:
-                str_num = str(area+i)
-                pump_unit = Pump('P'+str_num, ins='', outs='', thermo=feed.thermo)
-                pump_unit-0-sink_index-sink
-                storage_unit = StorageTank('T'+str_num, ins=feed, thermo=feed.thermo)
-                storage_unit-0-0-pump_unit
-                units += [storage_unit, pump_unit]
-                # storage_unit.ins[0].price = feed.price
-                # feed.price = 0.
-            elif is_gaseous(feed):
-                pass
-            i+=1
-
-    for product in products:
-        # source = product.source
-        # source_index = source.outs.index(product)
-        if (not product.F_mol==0.) or include_empty_products:
-            # print(product.source, product.ID, product.sink)
-            if is_solid(product):
-                str_num = str(area+i)
-                storage_unit = StorageTank('T'+str_num, ins=product, tau=product_storage_tau, thermo=feed.thermo)
-                pump_unit = Pump('P'+str_num, ins=storage_unit-0, thermo=feed.thermo)
-                units += [storage_unit, pump_unit]
-                pump_unit.outs[0].price = product.price
-                product.price = 0.
-            elif is_liquid(product) and not product.imol['Water']/product.F_mol==1\
-                and not (is_from_unit_in_area(product, wastewater_area)): # as storage units are created only for no_facilities_sys, this condition is 
-                                                                          # not really necessary (even though storage is created after WWT), might remove later
-                str_num = str(area+i)
-                storage_unit = StorageTank('T'+str_num, ins=product, tau=product_storage_tau, thermo=feed.thermo)
-                pump_unit = Pump('P'+str_num, ins=storage_unit-0, outs='product_'+product.ID, thermo=feed.thermo)
-                units += [storage_unit, pump_unit]
-                pump_unit.outs[0].price = product.price
-                product.price = 0.
-            elif is_gaseous(product):
-                pass
-            i+=1
-        
-    return units
-    
-def is_from_unit_in_area(stream, area):
-    source_ID = stream.source.ID
-    # 3-digit area number
-    if not source_ID[-4] in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']:
-        if source_ID[-3]==str(area)[0]:
-            return True
-        else:
-            return False
-    # 4-digit area number
-    else:
-        if source_ID[-4]==str(area)[0] and source_ID[-3]==str(area)[1]:
-            return True
-        else:
-            return False
-    
-def is_solid(stream, cutoff_massfrac=0.5):
-    if stream.phase=='s':
-        return True
-    solid_phase_ref_chems = [i.ID for i in stream.chemicals if i.phase_ref=='s']
-    if stream.F_mol and stream.imass[solid_phase_ref_chems].sum()/stream.F_mass>cutoff_massfrac:
-        return True
-    else:
-        return False
-
-def is_liquid(stream, cutoff_massfrac=0.5):
-    liquid_phase_ref_chems = [i.ID for i in stream.chemicals if i.phase_ref=='l']
-    if stream.F_mol and stream.imass[liquid_phase_ref_chems].sum()/stream.F_mass>cutoff_massfrac:
-        return True
-    else:
-        return False
-
-def is_gaseous(stream, cutoff_massfrac=0.5, cutoff_P=101325):
-    if stream.phase=='g':
-        return True
-    gas_phase_ref_chems = [i.ID for i in stream.chemicals if i.phase_ref=='l']
-    if stream.F_mol and stream.imass[gas_phase_ref_chems].sum()/stream.F_mass>cutoff_massfrac\
-        and stream.P>=cutoff_P:
-        return True
-    else:
-        return False
-
 #%% Generating a system by process block-based synthesis
 
 def get_system_block_based(feedstock, product, 
-                           block_superstructure=None, 
+                           block_superstructure=BlockSuperstructure(), 
                            choice=None, 
-                           chemicals=None,
-                           draw=True,
-                           new_facilities=True,
-                           new_storage=True,
-                           storage_for_empty_feeds=False,
-                           storage_for_empty_products=False,
-                           TEA_year=2019):
+                           chemicals=chemicals_default,
+                           draw=True):
     
-    if block_superstructure is None: block_superstructure = BlockSuperstructure()
-    if chemicals is None: chemicals = chemicals_default
     # if not chemicals:
     #     chemicals = chems
     set_thermo(chemicals)
     
     u = main_flowsheet.unit
+    
     BSS = block_superstructure
     BSS.create_graph()
     if draw: BSS.draw_graph()
     all_paths = BSS.get_all_paths(feedstock, product)
     if draw: BSS.get_and_draw_all_paths(feedstock, product)
     path = None
-    
+        
     if len(all_paths)>1: # more than one possible path
         if choice is None: # if user has not entered a choice of path
             print('\nMultiple paths possible; enter value for "choice" argument from the following integers:\n')
@@ -222,14 +113,11 @@ def get_system_block_based(feedstock, product,
                 
     for i in range(len(all_blocks)-1):
         all_blocks[i].make_all_possible_connections(all_blocks[i+1])
-
-    # Initialize and simulate no-facilities system; 
-    # also update TEA year for all blocks
+    
+    # Initialize and simulate no-facilities system
     units = []
-    for i in all_blocks: 
-        units+= list(i.system.units)
-        i.TEA_year = TEA_year
-
+    for i in all_blocks: units+= list(i.system.units)
+        
     no_facilities_sys = System.from_units('no_facilities_sys', units)
     no_facilities_sys.simulate(update_configuration=True)
     
@@ -312,48 +200,15 @@ def get_system_block_based(feedstock, product,
         boiler_streams += [i.system.outs[j] for j in i.boiler]
         for j in i.ignored_HXN:
             namespace_dict.update({'j':j})
-            try:
-                exec('ignored_HXN_units.append(u.' + j + ')', namespace_dict)
-            except:
-                breakpoint()
+            exec('ignored_HXN_units.append(' + j + ')', namespace_dict)
         
     # Create facilities-only system
-    facilities_only_sys_units = []
-    if new_facilities:
-        facilities_only_sys = create_facilities_only_sys(wastewater_streams=wastewater_streams,
-                                                         boiler_streams=boiler_streams, 
-                                                         ignored_HXN_units=ignored_HXN_units)
-        facilities_only_sys_units = facilities_only_sys.units
-    
-    # SystemFactory to initialize and connect storage units
-    
-    @SystemFactory(ID = 'storage_only_sys')
-    def create_storage_only_sys(ins, outs, wastewater_streams=[], boiler_streams=[], ignored_HXN_units=[]):
-        feeds = list(no_facilities_sys.feeds)
-        products = list(no_facilities_sys.products)
-        for i in wastewater_streams+boiler_streams: 
-            if i in products: products.remove(i)
-        feedstock_stream = all_blocks[0].inlet(feedstock)
-        if feedstock_stream in feeds: feeds.remove(feedstock_stream)
-        feed_storage_units = create_feed_and_product_storage_units(feeds, products,
-                                                                   include_empty_feeds=storage_for_empty_feeds,
-                                                                   include_empty_products=storage_for_empty_products,
-                                                                   )
-    
-    # Create storage-only system
-    storage_only_sys_units = []
-    if new_storage:
-        storage_only_sys = create_storage_only_sys(wastewater_streams=wastewater_streams,
-                                                   boiler_streams=boiler_streams, 
-                                                   ignored_HXN_units=ignored_HXN_units)
-        storage_only_sys_units = storage_only_sys.units
+    facilities_only_sys = create_facilities_only_sys(wastewater_streams=wastewater_streams,
+                                                     boiler_streams=boiler_streams, 
+                                                     ignored_HXN_units=ignored_HXN_units)
     
     # Create full system
-    full_sys = System.from_units('full_sys', 
-                                 list(no_facilities_sys.units) + 
-                                 facilities_only_sys_units +
-                                 storage_only_sys_units)
-    
+    full_sys = System.from_units('full_sys', list(no_facilities_sys.units) + list(facilities_only_sys.units))
     full_sys.simulate(update_configuration=True)
     if draw: full_sys.diagram('cluster')
     

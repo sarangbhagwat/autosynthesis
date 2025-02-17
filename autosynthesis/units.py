@@ -14,7 +14,7 @@ import thermosteam as tmo
 from biosteam.units.decorators import cost
 
 ParallelRxn = tmo.reaction.ParallelReaction
-# Chemical Engineering Plant Cost Index from Chemical Engineering Magazine
+# Chemical Engineering Plant Cost Index from Chemical Engineering Magzine
 # (https://www.chemengonline.com/the-magazine/)
 CEPCI = {1997: 386.5,
          1998: 389.5,
