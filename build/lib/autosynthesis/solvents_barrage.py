@@ -27,6 +27,7 @@ solvent_IDs = [
                 'Tridecanol',
                 'Ethanol',
                 'Methanol',
+                'Ethyl acetate',
                 'Propyl acetate',
                 'Butyl acetate',
                 'Hexanol',
@@ -71,6 +72,7 @@ def run_solvents_barrage(stream, # Stream from which you wish to extract the sol
                          print_result_with_optimal_criterion=False): 
     test_env_chems = tmo.Chemicals([])
     borrowed_chemicals = stream.chemicals
+    borrowed_thermo = stream.thermo
     if not T:
         T=stream.T
     def chemical_database(ID, phase=None, **kwargs):
@@ -120,8 +122,10 @@ def run_solvents_barrage(stream, # Stream from which you wish to extract the sol
             #     chemical_database(chem.CAS)
             # except:
             if not chem.CAS in [c.CAS for c in test_env_chems]:
-                test_env_chems.append(borrowed_chemicals[chem.ID])
-            
+                try:
+                    test_env_chems.append(borrowed_chemicals[chem.ID])
+                except:
+                    pass
     load_chemicals(borrowed_chemicals_list)
     test_env_chems.compile()
     
@@ -318,6 +322,9 @@ def run_solvents_barrage(stream, # Stream from which you wish to extract the sol
                 return 'Error: ' + str(e)
         except FloatingPointError as e:
             return 'Error: ' + str(e)
+        except UnboundLocalError as e:
+            return 'Error: ' + str(e)
+    
     def forms_azeotrope_with_solute(chem_ID):
         d_az_in = tmo.Stream('d_az_in')
         d_az_in.imol[solute_ID] = 100
@@ -327,6 +334,10 @@ def run_solvents_barrage(stream, # Stream from which you wish to extract the sol
         try:
             d_az.simulate()
             return False
+        
+        except UnboundLocalError as e:
+            return 'Error: ' + str(e)
+        
         except RuntimeError as e:
             if azeotrope_infeasible_recovery_identifier in str(e):
                 return True
@@ -559,10 +570,11 @@ def run_solvents_barrage(stream, # Stream from which you wish to extract the sol
 def get_candidate_solvents_ranked(stream, # Stream from which you wish to extract the solute
                      solute_ID, # solute chemical ID
                      impurity_IDs, # List of IDs of impurities in "stream" that you want get partitioning results for, other than water; note that all chemicals in the stream will affect LLE interaction effects, regardless of which chemicals are present in impurity_IDs
+                     solvent_IDs=solvent_IDs,
                      T=None, # Temperature (K) at which you wish to run the solvents barrage; temperature (K) of "stream" by default
                      P=None,
                      solvent_to_water_mol_ratio_range=(0.25, 4.),
-                     disregard_solvent_water_azeotrope=True,
+                     disregard_solvent_water_azeotrope=False,
                      stream_modifiers='baseline_stream', # String: 'baseline_stream' to analyze the "stream" passed in arguments; 'impurity_free_stream' to remove the impurities listed in impurity_IDs before performing analyses; 'solute_in_pure_water' to analyze simply for the solute in pure water)
                      plot_Ks=False,
                      save_excel=False,
@@ -580,6 +592,7 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
     results = results = run_solvents_barrage(stream=stream, # Stream from which you wish to extract the solute
                          solute_ID=solute_ID, # solute chemical ID
                          impurity_IDs=impurity_IDs, # List of IDs of impurities in "stream" that you want get partitioning results for, other than water; note that all chemicals in the stream will affect LLE interaction effects, regardless of which chemicals are present in impurity_IDs
+                         solvent_IDs=solvent_IDs,
                          T=T, # Temperature (K) at which you wish to run the solvents barrage; temperature (K) of "stream" by default
                          solvent_to_water_mol_ratio_range=solvent_to_water_mol_ratio_range,
                          stream_modifiers=stream_modifiers,
@@ -593,8 +606,8 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
     # print(results)
     # print([results[rl[8]][i] for i in range(len(results[rl[0]]))])
     candidate_solvent_indices = [i for i in range(len(results[rl[0]])) 
-                                      if (not results[rl[8]][i]) 
-                                      and ((not results[rl[7]][i]) or disregard_solvent_water_azeotrope)
+                                       if (not results[rl[7]][i]) 
+                                      if ((not results[rl[6]][i]) or disregard_solvent_water_azeotrope)
                                       # and results[rl[3]][i] < 1.
                                       # and results[rl[4]][i] < 1.
                                       
@@ -604,11 +617,13 @@ def get_candidate_solvents_ranked(stream, # Stream from which you wish to extrac
                                       
                                       # and results[rl[1]][i] < 0.05
                                       # and results[rl[2]][i] < 0.05
-                                      and abs(results[rl[6]][i]) > 20
+                                      
+                                      # and abs(results[rl[6]][i]) >  #!!!
+                                      
                                       # and abs(results[rl[5]][i]) > 20
                                       ]
     
-    candidate_solvent_indices.sort(key=lambda i: results[rl[6]][i], reverse=True)
+    candidate_solvent_indices.sort(key=lambda i: results[rl[5]][i], reverse=True)
     candidate_solvent_indices.sort(key=lambda i: results[rl[0]][i], reverse=True)
 
     candidate_solvents = [results.index[i] for i in candidate_solvent_indices]
