@@ -6,7 +6,7 @@
 # https://github.com/sarangbhagwat/autosynthesis/blob/main/LICENSE
 # for license details.
 
-__version__ = '0.0.24'
+__version__ = '0.0.25'
 __author__ = 'Sarang S. Bhagwat'
 
 #%% Initialize AutoSynthesis
