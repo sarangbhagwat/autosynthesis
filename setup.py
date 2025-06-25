@@ -9,8 +9,8 @@ from setuptools import setup
 
 setup(
     name='autosynthesis',
-    packages=['autosynthesis'],
-    version='0.0.26',    
+    packages=['autosynthesis', 'autosynthesis.process_blocks'],
+    version='0.0.28',    
     description='A toolkit for automated synthesis of biorefinery processes including pretreatment, conversion, separation, and upgrading.',
     url='https://github.com/sarangbhagwat/autosynthesis',
     download_url='https://github.com/sarangbhagwat/autosynthesis.git',
