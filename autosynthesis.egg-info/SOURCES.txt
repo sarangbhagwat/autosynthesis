@@ -3,6 +3,7 @@ README.md
 setup.py
 autosynthesis/__init__.py
 autosynthesis/_process_block.py
+autosynthesis/_tea_factory.py
 autosynthesis/apd_utils_c.py
 autosynthesis/graph_utils.py
 autosynthesis/solvents_barrage.py

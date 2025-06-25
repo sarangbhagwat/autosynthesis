@@ -6,16 +6,16 @@
 # https://github.com/sarangbhagwat/autosynthesis/blob/main/LICENSE
 # for license details.
 
-__version__ = '0.0.25'
+__version__ = '0.0.26'
 __author__ = 'Sarang S. Bhagwat'
 
 #%% Initialize AutoSynthesis
 
 from . import utils, units, process_blocks, _process_block
-from utils import *
-from units import *
-from process_blocks import *
-from _process_block import *
+from .utils import *
+from .units import *
+from .process_blocks import *
+from ._process_block import *
 
 __all__ = (
     'utils', 'units',

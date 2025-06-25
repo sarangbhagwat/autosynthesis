@@ -10,13 +10,13 @@
 
 from .._process_block import ProcessBlock
 from . import feedstock_to_sugars
-from feedstock_to_sugars import *
+from .feedstock_to_sugars import *
 from . import sugar_fermentation
-from sugar_fermentation import *
+from .sugar_fermentation import *
 from . import product_separation
-from product_separation import *
+from .product_separation import *
 from . import product_upgrading
-from product_upgrading import *
+from .product_upgrading import *
 from._block_superstructure import BlockSuperstructure
 from._block_based_system import get_system_block_based
 

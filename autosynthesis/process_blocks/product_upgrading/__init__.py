@@ -9,9 +9,9 @@
 """
 
 from . import HP_solution_upgrading_acrylic_acid
-from HP_solution_upgrading_acrylic_acid import *
+from .HP_solution_upgrading_acrylic_acid import *
 from . import TAL_upgrading_potassium_sorbate
-from TAL_upgrading_potassium_sorbate import *
+from .TAL_upgrading_potassium_sorbate import *
 
 
 
