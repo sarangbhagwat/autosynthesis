@@ -1,2 +1,0 @@
-biosteam>=2.33.2
-xlsxwriter
