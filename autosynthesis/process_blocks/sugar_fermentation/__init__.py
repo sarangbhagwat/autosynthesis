@@ -9,9 +9,11 @@
 """
 
 from . import fermentation_HP
+from fermentation_HP import *
 from . import fermentation_TAL
+from fermentation_TAL import *
 from . import fermentation_ethanol
-
+from fermentation_ethanol import *
 
 
 __all__ = (

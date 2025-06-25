@@ -9,9 +9,13 @@
 """
 
 from . import ethanol_separation
+from ethanol_separation import *
 from . import HP_solution_separation
+from HP_solution_separation import *
 from . import HP_salt_separation
+from HP_salt_separation import *
 from . import TAL_separation
+from TAL_separation import *
 
 
 
