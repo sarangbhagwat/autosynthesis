@@ -358,5 +358,7 @@ def get_system_block_based(feedstock, product,
     if draw: full_sys.diagram('cluster')
     
     for i in range(3): full_sys.simulate()
+    # full_sys.feedstock_streams = [all_blocks[0].inlet(feedstock)]
+    
     return full_sys
 
