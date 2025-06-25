@@ -10,7 +10,7 @@ from setuptools import setup
 setup(
     name='autosynthesis',
     packages=['autosynthesis', 'autosynthesis.process_blocks'],
-    version='0.0.28',    
+    version='0.0.29',    
     description='A toolkit for automated synthesis of biorefinery processes including pretreatment, conversion, separation, and upgrading.',
     url='https://github.com/sarangbhagwat/autosynthesis',
     download_url='https://github.com/sarangbhagwat/autosynthesis.git',
@@ -24,7 +24,6 @@ setup(
                       'biosteam>=2.33.2',
                       'xlsxwriter',
                       ],
-    package_dir=['autosynthesis'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
