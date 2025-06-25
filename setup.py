@@ -5,12 +5,12 @@ Created on Sat Nov 12 20:30:00 2022
 @author: sarangbhagwat
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='autosynthesis',
-    packages=['autosynthesis', 'autosynthesis.process_blocks'],
-    version='0.0.29',    
+    packages=find_packages(),
+    version='0.0.30',    
     description='A toolkit for automated synthesis of biorefinery processes including pretreatment, conversion, separation, and upgrading.',
     url='https://github.com/sarangbhagwat/autosynthesis',
     download_url='https://github.com/sarangbhagwat/autosynthesis.git',
