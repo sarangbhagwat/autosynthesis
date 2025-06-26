@@ -16,17 +16,17 @@ from biorefineries.cornstover import create_dilute_acid_pretreatment_system
 from biorefineries.miscanthus.systems import feedstock_kwargs as miscanthus_kwargs
 from thermosteam import Stream
 
-__all__ = ('CellulosicDiluteAcidPretreatment', 'CornstoverDiluteAcidPretreatment',
+__all__ = ('CornstoverDiluteAcidPretreatment',
            'MiscanthusDiluteAcidPretreatment')
 
-class CellulosicDiluteAcidPretreatment(ProcessBlock):
+class CornstoverDiluteAcidPretreatment(ProcessBlock):
     
-    def __init__(self, ID='cellulosic_dilute_acid_pretreatment'):
+    def __init__(self, ID='cornstover_cellulosic_dilute_acid_pretreatment'):
         create_function = create_dilute_acid_pretreatment_system
         base_TEA_year = 2007
         N_ins = 3
         N_outs = 2
-        inlets = {i: 0 for i in ['corn stover', 'miscanthus', 'switchgrass', 'wheat straw']}
+        inlets = {'corn stover': 0}
         outlets = {'pretreated cellulosic stream':0}
         boiler = []
         wastewater = [1]
@@ -44,21 +44,40 @@ class CellulosicDiluteAcidPretreatment(ProcessBlock):
                      N_outs=N_outs,
                      )
 
-CornstoverDiluteAcidPretreatment = CellulosicDiluteAcidPretreatment()
 
-
-class MiscanthusDiluteAcidPretreatment(CellulosicDiluteAcidPretreatment):
-    def __init__(self, ID='miscanthus_cellulosic_dilute_acid_pretreatment'):
-        CellulosicDiluteAcidPretreatment.__init__(self, ID=ID)
-        self._cornstover_DAP_create_function = self.create_function
-        self.create_function = self.miscanthus_DAP_create_function
-        self.miscanthus_default_composition = Stream(miscanthus_kwargs)
+class MiscanthusDiluteAcidPretreatment(ProcessBlock):
+    
+    def __init__(self, ID='cornstover_cellulosic_dilute_acid_pretreatment'):
+        create_function = self.miscanthus_DAP_create_function
+        base_TEA_year = 2007
+        N_ins = 3
+        N_outs = 2
+        inlets = {'miscanthus': 0}
+        outlets = {'pretreated cellulosic stream':0}
+        boiler = []
+        wastewater = [1]
+        ignored_HXN = []
         
-    def miscanthus_DAP_create_function(self):
-        sys = self._cornstover_DAP_create_function()
-        feedstock = self.inlet['miscanthus']
+        ProcessBlock.__init__(self, ID=ID, 
+                     create_function=create_function, 
+                     base_TEA_year=base_TEA_year,
+                     inlets=inlets, 
+                     outlets=outlets,
+                     boiler=boiler,
+                     wastewater=wastewater,
+                     ignored_HXN=ignored_HXN,
+                     N_ins=N_ins,
+                     N_outs=N_outs,
+                     )
+        
+        self.miscanthus_default_composition = Stream(**miscanthus_kwargs)
+        
+    def miscanthus_DAP_create_function(self, ID):
+        sys = create_dilute_acid_pretreatment_system('miscanthus_cellulosic_dilute_acid_pretreatment_sys')
+        feedstock = sys.ins[self.inlets['miscanthus']]
         original_F_mass = feedstock.F_mass
         feedstock.copy_like(self.miscanthus_default_composition)
         feedstock.F_mass = original_F_mass
+        feedstock.ID = 'miscanthus'
         return sys
     

@@ -27,7 +27,8 @@ _all_process_blocks = [
     dextrose_monohydrate_receiving.DextroseMonohydrateReceiving(),
     cane_juicing.SugarcaneJuicing(),
     corn_dry_grind.CornDryGrind(),
-    cellulosic_pretreatment.CellulosicDiluteAcidPretreatment(),
+    cellulosic_pretreatment.CornstoverDiluteAcidPretreatment(),
+    cellulosic_pretreatment.MiscanthusDiluteAcidPretreatment(),
     cellulosic_saccharification.CellulosicEnzymaticSaccharification(),
     
     # sugar_fermentation
