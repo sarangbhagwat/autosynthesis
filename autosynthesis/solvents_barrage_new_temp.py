@@ -105,6 +105,7 @@ solvent_IDs = [
                 '1,4-Butanediol',
                 'Hexanol',
                 'Hexane',
+                'Cyclopentanol',
                 'Cyclohexanol',
                 'Cyclohexanone',
                 'Heptanol',
@@ -161,14 +162,18 @@ secondary_metabolites = [c.ID for c in chems]
 if 'oxidane' in secondary_metabolites:
     secondary_metabolites.remove('oxidane') # Water
 
+if 'isobutanol' in secondary_metabolites:
+    secondary_metabolites.remove('isobutanol') # Water
+    
 else:
     chems.append(tmo.Chemical('Water'))
 # solute = '3-hydroxy-2,2-dimethylbutanoic acid' # 29269-83-8
 # solute = '3-hydroxybutanoic acid'
-solute = 'isobutanol'
+solute = 'Isobutanol'
 carrier = 'Water'
 
 chems.append(tmo.Chemical(solute))
+chems.append(tmo.Chemical(carrier))
 
 for si in solvent_IDs:
     chems.append(tmo.Chemical(si))
@@ -176,8 +181,9 @@ chems.compile()
 
 tmo.settings.set_thermo(chems)
 
-if 'oxidane' in secondary_metabolites:
-    chems.set_synonym('oxidane', 'Water')
+# if 'oxidane' in secondary_metabolites:
+#     chems.set_synonym('oxidane', 'Water')
+    
 chems.set_synonym('117-81-7', 'Diethylhexyl pthalate')
 chems.set_synonym('143-28-2', 'Oleyl alcohol')
 
@@ -198,8 +204,7 @@ mixed_stream.lle(T=mixed_stream.T)
 conc_factors_solvents = []
 frac_extracted_solvents = []
 
-all_candidate_solvents = solvent_IDs 
-# \+ secondary_metabolites
+all_candidate_solvents = solvent_IDs + secondary_metabolites
 for solvent in all_candidate_solvents:
     mixed_stream.phase = 'l'
     mixed_stream.imol[solvent] = 1000
@@ -229,8 +234,9 @@ if plot:
     
 #%% Set best solvent (extractant)
 
-best_solvent = list(solvents_df['Solvent'])[2]
-
+# best_solvent = list(solvents_df['Solvent'])[2]
+# best_solvent = 'Ethyl acetate'
+best_solvent = 'Isopentyl acetate'
 solvent_stream = tmo.Stream('solvent_stream', T=273.15+25)
 solvent_stream.imol[best_solvent] = 1000
 
@@ -304,7 +310,7 @@ if plot:
 
 MSMS1 = bst.MultiStageMixerSettlers('MSMS1', 
                                     ins=(original_stream, solvent_stream), 
-                                    outs=('extract', 'raffinate'), N_stages=1,
+                                    outs=('extract', 'raffinate'), N_stages=5,
                                     top_chemical=best_solvent,
                                     )
 

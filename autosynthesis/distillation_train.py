@@ -187,7 +187,8 @@ def optimize_column_recoveries(column, bounds=(0.001, 0.999), steps=5):
                 if azeotrope_infeasible_recovery_identifier in str(e)\
                    or 'divide by zero' in str(e)\
                    or 'failed to find bracket' in str(e)\
-                   or 'invalid value encountered' in str(e):
+                   or 'invalid value encountered' in str(e)\
+                   or 'significant intermediate volatile' in str(e):
                     pass
                 else:
                     raise e
