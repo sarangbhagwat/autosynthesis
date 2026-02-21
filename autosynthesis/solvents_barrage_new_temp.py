@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt    
 from datetime import datetime
+import copy 
 
 from autosynthesis.distillation_train import get_distillation_superstructure, get_all_possible_distillation_trains, TargetProduct, TargetProductsSet
 
@@ -128,6 +129,8 @@ solvent_IDs = [
                 'Tetrahydrofuran',
                 ]
 
+commercial_solvent_IDs = copy.deepcopy(solvent_IDs)
+
 #%% Load chemicals and set solute and carrier
 from nskinetics.data.P_putida_all_metabolites import load_putida_chems
 
@@ -168,8 +171,9 @@ if 'isobutanol' in secondary_metabolites:
 else:
     chems.append(tmo.Chemical('Water'))
 # solute = '3-hydroxy-2,2-dimethylbutanoic acid' # 29269-83-8
-# solute = '3-hydroxybutanoic acid'
-solute = 'Isobutanol'
+# solute = '2,3-butanediol'
+solute = '3-Hydroxypropionic acid'
+# solute = 'Isobutanol'
 carrier = 'Water'
 
 chems.append(tmo.Chemical(solute))
@@ -210,7 +214,9 @@ for solvent in all_candidate_solvents:
     mixed_stream.imol[solvent] = 1000
     mixed_stream.lle(T=mixed_stream.T)
     
-    conc_factors_solvents.append(get_conc_factor(solute, solvent, mixed_stream, original_stream))
+    # conc_factors_solvents.append(get_conc_factor(solute, solvent, mixed_stream, original_stream))
+    conc_factors_solvents.append(get_K_extract_over_raffinate(solute, mixed_stream, solvent, carrier))
+    
     frac_extracted_solvents.append(get_fraction_extracted(solute, mixed_stream, solvent, carrier))
     
     mixed_stream.phase = 'l'
@@ -224,7 +230,22 @@ solvents_df = solvents_df.sort_values(by='Frac extracted', ascending=False)
 
 #%%
 if plot:
-    ax = solvents_df.plot.bar(x='Solvent', rot=90, figsize=(20,10))
+    plt.figure()
+    plt.rcParams.update({'font.size': 8}) # must set in top
+    
+    # !!!
+    # ax = solvents_df.plot.bar(x='Solvent', rot=90, figsize=(20,10))
+    
+    # ax = solvents_df['Conc factor'].plot.bar(x='Solvent', rot=90, figsize=(16,10))
+    
+    #!!!
+    ax = solvents_df.plot.bar(y=['Conc factor',], x='Solvent', rot=90, figsize=(20,10), position=0, color='#002676')
+    solvents_df['Frac extracted'].plot.bar(ax=ax, secondary_y=True, position=1, color='#FDB515')
+    
+    ax.set_xticklabels(solvents_df['Solvent'])
+    ax.right_ax.set_yticks(np.linspace(0, 1.0, 6))
+    
+    # ax.right_ax.set_ylabel('Value B (Secondary)')
     xtick_labels = ax.get_xticklabels()
     for label in xtick_labels:
         if label.get_text() in secondary_metabolites:
